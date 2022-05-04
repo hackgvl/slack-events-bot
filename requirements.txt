@@ -1,0 +1,5 @@
+aiohttp
+autopep8
+python-dateutil
+requests
+slack_bolt

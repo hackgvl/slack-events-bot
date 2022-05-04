@@ -1,0 +1,5 @@
+.envrc.example
+.gitignore
+.tool-versions
+*.md
+docker-compose.yml

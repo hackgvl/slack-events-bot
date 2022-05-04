@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  c4g-events:
+    build:
+      context: ./
+    container_name: c4g-events
+    restart: always
+    volumes:
+      - ./c4g.db:/usr/src/app/c4g.db
