@@ -7,4 +7,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD [ "python", "./c4g-events.py" ]
+CMD [ "python", "./c4g/bot.py" ]
