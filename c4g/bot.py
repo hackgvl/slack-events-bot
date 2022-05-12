@@ -85,7 +85,7 @@ async def check_api(conn, app):
             filtered_events = filter(lambda event_data: (parser.isoparse(event_data['time']) < furthest_allowed_date), await r.json())
 
             for event_data in filtered_events:
-                if event_data['status'] == "cancelled" or event_data['status'] == "upcoming":
+                if event_data['status'] == "cancelled" or event_data['status'] == "upcoming" or event_data['status'] == "past":
                     event = Event.from_event_json(event_data)
                     event_messages = await database.get_event_messages(conn, event.uuid)
 
@@ -121,9 +121,6 @@ async def check_api(conn, app):
                                 unfurl_links=False,
                                 unfurl_media=False)
                             await database.create_event_message(conn, event.uuid, slackResponse['ts'], channel_id)
-                elif event_data['status'] == "past":
-                    # no need to update more, it's past already
-                    continue
                 else:
                     print(
                         f"Couldn\'t parse event {event_data['uuid']} with status: {event_data['status']}")

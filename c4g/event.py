@@ -30,6 +30,8 @@ class Event:
             status = "Upcoming ✅"
         elif event_json['status'] == "cancelled":
             status = "Cancelled ❌"
+        else:
+            status = event_json['status'].title()
 
         return cls(
             title=f"{event_json['event_name']} by {event_json['group_name']}",
