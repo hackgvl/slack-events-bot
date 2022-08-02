@@ -2,8 +2,7 @@ version: "3"
 
 services:
   c4g-events:
-    build:
-      context: ./
+    image: codeforgreenville/c4g-events
     container_name: c4g-events
     restart: always
     environment:

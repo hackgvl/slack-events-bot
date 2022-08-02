@@ -3,3 +3,4 @@
 .tool-versions
 *.md
 docker-compose.yml
+.github
