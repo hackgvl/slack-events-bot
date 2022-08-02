@@ -143,4 +143,4 @@ if __name__ == "__main__":
     thread.start()
 
     # start slack app
-    app.start(port=int(os.environ.get("PORT")))
+    app.start(port=int(os.environ.get("PORT").strip("\"\'")))
