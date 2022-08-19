@@ -6,8 +6,8 @@ services:
     container_name: c4g-events
     restart: always
     environment:
-      - BOT_TOKEN="bot_token_here"
-      - SIGNING_SECRET="signing_secret_here"
-      - PORT="3000"
+      - BOT_TOKEN=bot_token_here
+      - SIGNING_SECRET=signing_secret_here
+      - PORT=3000
     volumes:
       - ./c4g.db:/usr/src/app/c4g.db
