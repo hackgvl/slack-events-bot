@@ -5,8 +5,9 @@ import urllib
 
 
 class Event:
-    def __init__(self, title, description, location, time, url, status, uuid):
+    def __init__(self, title, group_name, description, location, time, url, status, uuid):
         self.title = title
+        self.group_name = group_name
         self.description = description
         self.location = location
         self.time = time
@@ -30,6 +31,8 @@ class Event:
         status = ""
         if event_json['status'] == "upcoming":
             status = "Upcoming ✅"
+        elif event_json['status'] == "past":
+            status = "Past ✔"
         elif event_json['status'] == "cancelled":
             status = "Cancelled ❌"
         else:
@@ -39,7 +42,8 @@ class Event:
             pytz.timezone(os.environ.get("TZ"))).strftime('%B %-d, %Y %I:%M %p %Z')
 
         return cls(
-            title=f"{event_json['event_name']} by {event_json['group_name']}",
+            title=event_json['event_name'],
+            group_name=event_json['group_name'],
             description=event_json['description'],
             location=location,
             time=time,
@@ -57,21 +61,35 @@ class Event:
 
         return [
             {
-                "type": "section",
+                "type": "header",
                 "text":  {
-                    "type": "mrkdwn",
-                    "text": f"<{self.url}|{self.title} :link:>"
+                    "type": "plain_text",
+                    "text": f"{self.title}"
                 }
             },
             {
-                "type": "divider"
+                "type": "section",
+                "fields": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"By {self.group_name}"
+
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"<{self.url}|*Link* :link:>"
+                    }
+                ]
             },
             {
                 "type": "section",
                 "text": {
                     "type": "plain_text",
-                    "text": self.description
+                    "text": f"{self.description}"
                 }
+            },
+            {
+                "type": "divider"
             },
             {
                 "type": "section",
@@ -83,7 +101,7 @@ class Event:
                     },
                     {
                         "type": "mrkdwn",
-                        "text": self.status
+                        "text": f"{self.status}"
                     }
                 ]
             },
@@ -110,7 +128,7 @@ class Event:
                     },
                     {
                         "type": "plain_text",
-                        "text": self.time
+                        "text": f"{self.time}"
                     }
                 ]
             }
