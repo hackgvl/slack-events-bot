@@ -9,5 +9,6 @@ services:
       - BOT_TOKEN=bot_token_here
       - SIGNING_SECRET=signing_secret_here
       - PORT=3000
+      - TZ=US/Eastern
     volumes:
       - ./c4g.db:/usr/src/app/c4g.db

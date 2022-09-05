@@ -115,8 +115,7 @@ async def check_api(conn, app):
                                 f"posting event {event.uuid} in {slack_channel_id}")
                             slackResponse = await app.client.chat_postMessage(
                                 channel=slack_channel_id,
-                                blocks=json.dumps(
-                                    event.create_slack_message()),
+                                blocks=event.create_slack_message(),
                                 text=event.create_backup_message_text(),
                                 unfurl_links=False,
                                 unfurl_media=False)

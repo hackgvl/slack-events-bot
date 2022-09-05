@@ -1,4 +1,6 @@
 from dateutil import parser
+import os
+import pytz
 import urllib
 
 
@@ -10,14 +12,14 @@ class Event:
         self.time = time
         self.url = url
         self.status = status
-        self.uuid=uuid
+        self.uuid = uuid
 
     # creates a struct of event information used to compose different formats of the event message
     @classmethod
     def from_event_json(cls, event_json):
         location = ""
         if event_json['venue'] is None:
-            location = "No location"
+            location = None
         elif event_json['venue']['name'] is not None and event_json['venue']['address'] is not None:
             location = f"{event_json['venue']['name']} at {event_json['venue']['address']} {event_json['venue']['city']}, {event_json['venue']['state']} {event_json['venue']['zip']}"
         elif event_json['venue']['lat'] is not None and event_json['venue']['lat']:
@@ -33,12 +35,14 @@ class Event:
         else:
             status = event_json['status'].title()
 
+        time = parser.isoparse(event_json['time']).astimezone(
+            pytz.timezone(os.environ.get("TZ"))).strftime('%B %-d, %Y %I:%M %p %Z')
+
         return cls(
             title=f"{event_json['event_name']} by {event_json['group_name']}",
             description=event_json['description'],
             location=location,
-            time=parser.isoparse(event_json['time']).strftime(
-                '%B %-d, %Y %I:%M %p'),
+            time=time,
             url=event_json['url'],
             status=status,
             uuid=event_json['uuid']
@@ -46,38 +50,28 @@ class Event:
 
     # composes a slack message using the blocks layout
     def create_slack_message(self):
+        if self.location is None:
+            location = "No location"
+        elif self.location is not None:
+            location = f"<https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(self.location)}|{self.location}>"
+
         return [
             {
-                "type": "header",
-                "text": {
-                        "type": "plain_text",
-                        "text": self.title
-                }
-            },
-            {
                 "type": "section",
-                "fields": [
-                    {
-                        "type": "mrkdwn",
-                        "text": f"<{self.url}|Link :link:>"
-                    }
-                ]
+                "text":  {
+                    "type": "mrkdwn",
+                    "text": f"<{self.url}|{self.title} :link:>"
+                }
             },
             {
                 "type": "divider"
             },
             {
                 "type": "section",
-                "fields": [
-                    {
-                        "type": "mrkdwn",
-                        "text": "*Description*"
-                    },
-                    {
-                        "type": "mrkdwn",
-                        "text": self.description
-                    }
-                ]
+                "text": {
+                    "type": "plain_text",
+                    "text": self.description
+                }
             },
             {
                 "type": "section",
@@ -103,7 +97,7 @@ class Event:
                     },
                     {
                         "type": "mrkdwn",
-                        "text": f"<https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(self.location)}|{self.location}>"
+                        "text": location
                     }
                 ]
             },
@@ -115,7 +109,7 @@ class Event:
                         "text": "*Time*"
                     },
                     {
-                        "type": "mrkdwn",
+                        "type": "plain_text",
                         "text": self.time
                     }
                 ]
@@ -124,4 +118,4 @@ class Event:
 
     # composes a text string of event information for backup
     def create_backup_message_text(self):
-        return f"Name: {self.title}\nDescription: {self.description}\nStatus: {self.status}\nLocation: {self.location}\nTime: {self.time}\nLink: {self.url}"
+        return f"Name: {self.title}\nLink: {self.url}\nDescription: {self.description}\nStatus: {self.status}\nLocation: {self.location}\nTime: {self.time}"
