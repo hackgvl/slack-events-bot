@@ -104,8 +104,7 @@ async def check_api(conn, app):
                             slackResponse = await app.client.chat_update(
                                 ts=channel_to_uuid[slack_channel_id],
                                 channel=slack_channel_id,
-                                blocks=json.dumps(
-                                    event.create_slack_message()),
+                                blocks=event.create_slack_message(),
                                 text=event.create_backup_message_text())
                         else:
                             # channel_id is the internal sqlite ID of the channel row
