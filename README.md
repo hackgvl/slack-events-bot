@@ -11,7 +11,26 @@ You can find the repository on
 To download this repo locally, clone it with `git clone
 git@github.com:codeforgreenville/c4g-events.git`
 
-## Installation
+## Docker instructions for hosting
+
+1. Download the `docker-compose.yml` file to your desired hosting location and
+   navigate to it
+1. Run `docker-compose pull` to pull the latest version of the container and
+   it's dependencies.
+1. Modify `docker-compose.yml` by replacing `BOT_TOKEN` and `SIGNING_SECRET`
+   values with values for a [valid Slack App](https://api.slack.com/apps).
+1. (Optional) By default, the app will create a sqlite database in the same
+   directory as `docker-compose.yml`. To modify the database location, modify
+   the `volumes:` binding like below:
+```
+    volumes:
+      - ./my-new-database-subdirectory/c4g.db:/usr/src/app/c4g.db
+```
+1. Run `docker-compose pull` to pull the latest version of the container and
+   it's dependencies.
+1. Start the app by doing `docker-compose up` or `docker-compose -d` to run in detached mode.
+
+## Host Installation
 
 1. Clone the repo using the instructions above and enter the new directory.
 1. Install the python version in `.tool-versions`. I recommend that you use
@@ -38,14 +57,26 @@ git@github.com:codeforgreenville/c4g-events.git`
 1. Install dependencies using `pip install -r requirements.txt`
 1. Run the app with `python c4g-events.py`!
 
-## Docker instructions
+## Docker instructions for building
 
 1. Clone the repo using the instructions above and enter the new directory.
-1. Run `docker-compose pull` to pull the latest version of the container and
-   it's dependencies.
+1. Modify `docker-compose.yml` by replacing `image: codeforgreenville/c4g-events` with the following:
+```
+    build:
+      context: ./
+```
+1. Modify `docker-compose.yml` by replacing `BOT_TOKEN` and `SIGNING_SECRET`
+   values with values for a [valid Slack App](https://api.slack.com/apps).
+1. (Optional) By default, the app will create a sqlite database in the same
+   directory as `docker-compose.yml`. To modify the database location, modify
+   the `volumes:` binding like below:
+```
+    volumes:
+      - ./my-new-database-subdirectory/c4g.db:/usr/src/app/c4g.db
+```
 1. Build and start the app with `docker-compose up --force-recreate --no-deps`
     1. You can just start the app by doing `docker-compose up` or
-       `docker-compose -d` to run in detached mode.
+       `docker-compose -d` to run in detached mode once it's been built
 
 ## License
 
