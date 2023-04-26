@@ -82,7 +82,7 @@ class Event:
                 "type": "header",
                 "text":  {
                     "type": "plain_text",
-                    "text": f"{self.title}"
+                    "text": f"{truncate_string(self.title)}"
                 }
             },
             {
@@ -90,12 +90,12 @@ class Event:
                 "fields": [
                     {
                         "type": "mrkdwn",
-                        "text": f"By {self.group_name}"
+                        "text": f"By {truncate_string(self.group_name)}"
 
                     },
                     {
                         "type": "mrkdwn",
-                        "text": f"<{self.url}|*Link* :link:>"
+                        "text": f"<{truncate_string(self.url)}|*Link* :link:>"
                     }
                 ]
             },
@@ -103,7 +103,7 @@ class Event:
                 "type": "section",
                 "text": {
                     "type": "plain_text",
-                    "text": f"{self.description}"
+                    "text": f"{truncate_string(self.description)}"
                 }
             },
             {
@@ -119,7 +119,7 @@ class Event:
                     },
                     {
                         "type": "mrkdwn",
-                        "text": f"{self.status}"
+                        "text": f"{truncate_string(self.status)}"
                     }
                 ]
             },
@@ -154,10 +154,14 @@ class Event:
 
     def create_backup_message_text(self):
         """Compose a text string of event information for backup"""
-        return (f"Name: {self.title}\n"
-                f"Link: {self.url}\n"
-                f"Description: {self.description}\n"
+        return (f"Name: {truncate_string(self.title)}\n"
+                f"Link: {truncate_string(self.url)}\n"
+                f"Description: {truncate_string(self.description)}\n"
                 f"Status: {self.status}\n"
                 f"Location: {self.location}\n"
                 f"Time: {self.time}"
                 )
+
+def truncate_string(string, length=500):
+    """Truncate string and add ellipses if it's too long"""
+    return string[:length] + (string[length:] and "...")
