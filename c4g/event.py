@@ -1,11 +1,22 @@
-from dateutil import parser
+"""Contains the event class, which holds information for an event"""
+
 import os
-import pytz
 import urllib
+
+import pytz
+from dateutil import parser
 
 
 class Event:
+    """Event records all the data from an event, and has methods to generate the
+    message from an event
+    """
+
+    # pylint: disable=too-many-instance-attributes
+    # Events have lots of data that we need to save together
+
     def __init__(self, title, group_name, description, location, time, url, status, uuid):
+        # pylint: disable=too-many-arguments
         self.title = title
         self.group_name = group_name
         self.description = description
@@ -18,11 +29,17 @@ class Event:
     # creates a struct of event information used to compose different formats of the event message
     @classmethod
     def from_event_json(cls, event_json):
+        """Create an event class object from the raw event json returned by the OpenApi"""
         location = ""
         if event_json['venue'] is None:
             location = None
         elif event_json['venue']['name'] is not None and event_json['venue']['address'] is not None:
-            location = f"{event_json['venue']['name']} at {event_json['venue']['address']} {event_json['venue']['city']}, {event_json['venue']['state']} {event_json['venue']['zip']}"
+            name = event_json['venue']['name']
+            address = event_json['venue']['address']
+            city = event_json['venue']['city']
+            state = event_json['venue']['state']
+            zip_code = event_json['venue']['zip']
+            location = f"{name} at {address} {city}, {state} {zip_code}"
         elif event_json['venue']['lat'] is not None and event_json['venue']['lat']:
             location = f"lat/long: {event_json['venue']['lat']}, {event_json['venue']['lat']}"
         elif event_json['venue']['name'] is not None:
@@ -52,12 +69,13 @@ class Event:
             uuid=event_json['uuid']
         )
 
-    # composes a slack message using the blocks layout
     def create_slack_message(self):
+        """Compose a slack message using the blocks layout"""
         if self.location is None:
             location = "No location"
         elif self.location is not None:
-            location = f"<https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(self.location)}|{self.location}>"
+            location = ("<https://www.google.com/maps/search/?api=1&query="
+                        f"{urllib.parse.quote(self.location)}|{self.location}>")
 
         return [
             {
@@ -134,6 +152,12 @@ class Event:
             }
         ]
 
-    # composes a text string of event information for backup
     def create_backup_message_text(self):
-        return f"Name: {self.title}\nLink: {self.url}\nDescription: {self.description}\nStatus: {self.status}\nLocation: {self.location}\nTime: {self.time}"
+        """Compose a text string of event information for backup"""
+        return (f"Name: {self.title}\n"
+                f"Link: {self.url}\n"
+                f"Description: {self.description}\n"
+                f"Status: {self.status}\n"
+                f"Location: {self.location}\n"
+                f"Time: {self.time}"
+                )

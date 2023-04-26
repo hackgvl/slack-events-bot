@@ -1,4 +1,8 @@
+"""Contains all the functions that interact with the sqlite database"""
+
+
 def create_tables(conn):
+    """Create database tables needed for c4g-events"""
     cur = conn.cursor()
 
     cur.executescript("""
@@ -26,71 +30,80 @@ def create_tables(conn):
     conn.commit()
 
 
-async def create_event_message(conn, eventUUID, messageTimestamp, channelID):
+async def create_event_message(conn, event_uuid, message_timestamp, channel_id):
+    """Create a record of a message sent in slack for an event"""
     cur = conn.cursor()
     cur.execute(
         """INSERT INTO messages (event_uuid, message_timestamp, channel_id)
             VALUES (?, ?, ?)""",
-        [eventUUID, messageTimestamp, channelID]
+        [event_uuid, message_timestamp, channel_id]
     )
 
     # saves the change to the database
     conn.commit()
 
 
-async def event_messages_count(conn, eventUUID):
+async def event_messages_count(conn, event_uuid):
+    """Get a count of messages sent in slack for an event"""
     cur = conn.cursor()
     cur.execute(
         "SELECT COUNT(event_uuid) FROM messages WHERE event_uuid = ?",
-        [eventUUID]
+        [event_uuid]
     )
     return cur.fetchone()[0]
 
 
-async def get_event_messages(conn, eventUUID):
+async def get_event_messages(conn, event_uuid):
+    """Get all messages sent in slack for an event"""
     cur = conn.cursor()
     cur.execute(
         """SELECT m.message_timestamp, c.slack_channel_id
             FROM messages m
             JOIN channels c ON m.channel_id = c.id
             WHERE m.event_uuid = ?""",
-        [eventUUID]
+        [event_uuid]
     )
     return [{'message_timestamp': x[0], 'slack_channel_id': x[1]} for x in cur.fetchall()]
 
 
 async def get_slack_channel_ids(conn):
+    """Get all slack channels that the bot is configured for"""
     cur = conn.cursor()
     cur.execute("SELECT slack_channel_id FROM channels")
     return [x[0] for x in cur.fetchall()]
 
 
-async def get_slack_channel_id(conn, channelID):
+async def get_slack_channel_id(conn, channel_id):
+    """Get Slack's id of a channel from our channel id"""
     cur = conn.cursor()
     cur.execute(
-        "SELECT slack_channel_id FROM channels WHERE id = ?", [channelID])
+        "SELECT slack_channel_id FROM channels WHERE id = ?", [channel_id])
     return cur.fetchone()[0]
 
 
-async def get_channel_id(conn, slackChannelID):
+async def get_channel_id(conn, slack_channel_id):
+    """Get our id of a channel from Slack's channel id"""
     cur = conn.cursor()
     cur.execute("SELECT id FROM channels WHERE slack_channel_id = ?", [
-                slackChannelID])
+                slack_channel_id])
     return cur.fetchone()[0]
 
 
-async def add_channel(conn, slackChannelID):
+async def add_channel(conn, slack_channel_id):
+    """Add a slack channel to post in for the bot"""
     cur = conn.cursor()
     cur.execute("INSERT INTO channels (slack_channel_id) VALUES (?)", [
-                slackChannelID])
+                slack_channel_id])
 
     # saves the change to the database
     conn.commit()
 
 
-async def remove_channel(conn, channelID):
+async def remove_channel(conn, channel_id):
+    """Remove a slack channel to post in from the bot"""
     cur = conn.cursor()
-    cur.execute("DELETE FROM channels WHERE slack_channel_id = ?", [channelID])
+    cur.execute(
+        "DELETE FROM channels WHERE slack_channel_id = ?", [channel_id])
 
     # saves the change to the database
     conn.commit()
