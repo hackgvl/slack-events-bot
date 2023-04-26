@@ -41,9 +41,9 @@ async def add_channel(ack, say, logger, command):
     if command['channel_id'] is not None:
         try:
             await database.add_channel(CONN, command['channel_id'])
-            await ack("Added channel for c4g-events 👍")
+            await ack("Added channel to c4g-events 👍")
         except sqlite3.IntegrityError:
-            await ack("This channel has already been added to c4g-events")
+            await ack("c4g-events has already been activated for this channel")
 
 
 @APP.command("/remove_channel")
@@ -54,9 +54,9 @@ async def remove_channel(ack, say, logger, command):
     if command['channel_id'] is not None:
         try:
             await database.remove_channel(CONN, command['channel_id'])
-            await ack("Removed channel for c4g-events 👍")
+            await ack("Removed channel from c4g-events 👍")
         except sqlite3.IntegrityError:
-            await ack("This channel has already been removed c4g-events")
+            await ack("c4g-events is not activated for this channel")
 
 
 @APP.command("/check_api")
@@ -65,7 +65,7 @@ async def trigger_check_api(ack, say, logger, command):
     del say
     logger.info(f"{command['command']} from {command['channel_id']}")
     if command['channel_id'] is not None:
-        await ack("Checking api for c4g-events 👍")
+        await ack("Checking api for events 👍")
         await check_api(CONN)
 
 
