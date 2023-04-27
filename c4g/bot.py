@@ -4,6 +4,7 @@ import asyncio
 import datetime
 import os
 import sqlite3
+import sys
 import threading
 
 import aiohttp
@@ -23,14 +24,16 @@ CONN = sqlite3.connect(DBPATH)
 
 
 async def periodically_check_api():
-    """Periodically check the api every hour"""
+    """Periodically check the api every hour
+
+    This function runs in a thread, meaning that it needs to create it's own
+    database connection. This is OK however, since it only runs once an hour
+    """
     print("Checking api every hour")
     while True:
-        # Create an additional connection since it will only be used once per
-        # hour
         with sqlite3.connect(DBPATH) as conn:
             await check_api(conn)
-        await asyncio.sleep(60 * 60)  # every hour
+        await asyncio.sleep(60 * 60)  # 60 minutes x 60 seconds
 
 
 @APP.command("/add_channel")
@@ -173,9 +176,14 @@ if __name__ == "__main__":
     print("Created database tables!")
 
     # start checking api every hour in background thread
-    thread = threading.Thread(
-        target=asyncio.run, args=(periodically_check_api(),))
-    thread.start()
+    thread = threading.Thread(target=asyncio.run,
+                              args=(periodically_check_api(),))
+    try:
+        thread.daemon = True
+        thread.start()
+    except (KeyboardInterrupt, SystemExit):
+        thread.join()
+        sys.exit()
 
     # start slack app
     APP.start(port=int(os.environ.get("PORT").strip("\"\'")))
