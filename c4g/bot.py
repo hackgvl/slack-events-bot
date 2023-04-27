@@ -117,7 +117,7 @@ async def post_message_for_channel(conn,
                                     posted_channels_set):
     """Posts or updates a message in a slack channel for an event"""
     if (slack_channel_id in posted_channels_set and
-            event.create_backup_message_text() == message_details[slack_channel_id]["message"]):
+            event.generate_text() == message_details[slack_channel_id]["message"]):
         print(f"{event.uuid} in {slack_channel_id} hasn't changed, not updating")
 
     elif slack_channel_id in posted_channels_set:
@@ -126,8 +126,8 @@ async def post_message_for_channel(conn,
         slack_response = await APP.client.chat_update(
             ts=message_details[slack_channel_id]["timestamp"],
             channel=slack_channel_id,
-            blocks=event.create_slack_message(),
-            text=event.create_backup_message_text())
+            blocks=event.generate_blocks(),
+            text=event.generate_text())
 
     else:
         # channel_id is the internal sqlite ID of the channel row
@@ -137,14 +137,14 @@ async def post_message_for_channel(conn,
 
         slack_response = await APP.client.chat_postMessage(
             channel=slack_channel_id,
-            blocks=event.create_slack_message(),
-            text=event.create_backup_message_text(),
+            blocks=event.generate_blocks(),
+            text=event.generate_text(),
             unfurl_links=False,
             unfurl_media=False)
 
         await database.create_event_message(conn,
                                             event.uuid,
-                                            event.create_backup_message_text(),
+                                            event.generate_text(),
                                             slack_response['ts'],
                                             channel_id)
 

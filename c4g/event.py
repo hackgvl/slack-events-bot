@@ -69,7 +69,7 @@ class Event:
             uuid=event_json['uuid']
         )
 
-    def create_slack_message(self):
+    def generate_blocks(self):
         """Compose a slack message using the blocks layout"""
         if self.location is None:
             location = "No location"
@@ -152,7 +152,7 @@ class Event:
             }
         ]
 
-    def create_backup_message_text(self):
+    def generate_text(self):
         """Compose a text string of event information for backup"""
         return (f"Name: {truncate_string(self.title)}\n"
                 f"Link: {truncate_string(self.url)}\n"
