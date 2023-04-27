@@ -8,7 +8,7 @@ import threading
 
 import aiohttp
 import database
-from dateutil import parser, tz
+import pytz
 from event import Event
 from slack_bolt.app.async_app import AsyncApp
 
@@ -73,80 +73,98 @@ async def check_api(conn):
     """Check the api for updates and update any existing messages"""
     async with aiohttp.ClientSession() as session:
         async with session.get("https://events.openupstate.org/api/gtc") as resp:
-            channels = await database.get_slack_channel_ids(conn)
+            # filter events for only those that are happening for the next week
+            today = datetime.date.today()
+            probe_date = datetime.datetime(
+                today.year, today.month, today.day, tzinfo=pytz.utc) + datetime.timedelta(days=3)
+            week_start = probe_date - datetime.timedelta(
+                days=probe_date.weekday() % 7)
+            week_end = week_start + datetime.timedelta(days=7)
 
-            # filter events for only those that are happening in the next 3 days
-            furthest_allowed_date = datetime.datetime.now(
-                tz=tz.gettz('US/Eastern')) + datetime.timedelta(days=3)
-            filtered_events = filter(lambda event_data: (
-                parser.isoparse(event_data['time']) < furthest_allowed_date), await resp.json())
+            blocks = [
+                {
+                    "type": "header",
+                    "text":  {
+                        "type": "plain_text",
+                        "text": ("HackGreenville Events for the week of "
+                                 f"{week_start.strftime('%B %-d')}")
+                    }
+                },
+                {
+                    "type": "divider"
+                }
+            ]
 
-            for event_data in filtered_events:
-                if event_data['status'] not in ["cancelled", "upcoming", "past"]:
-                    print(f"Couldn\'t parse event {event_data['uuid']} "
-                          "with status: {event_data['status']}")
+            text = (f"HackGreenville Events for the week of {week_start.strftime('%B %-d')}"
+                    "\n\n===\n\n")
+
+            for event_data in await resp.json():
+                event = Event.from_event_json(event_data)
+
+                # ignore event if it's not in the current week
+                if event.time < week_start or event.time > week_end:
                     continue
 
-                event = Event.from_event_json(event_data)
-                event_messages = await database.get_event_messages(conn, event.uuid)
+                # ignore event if it has a non-supported status
+                if event.status not in ["cancelled", "upcoming", "past"]:
+                    print(f"Couldn't parse event {event.uuid} "
+                          f"with status: {event.status}")
+                    continue
 
-                # used to lookup the message id and message for a particular channel
-                message_details = {
-                    message['slack_channel_id']: {
-                        "timestamp": message['message_timestamp'],
-                        "message": message['message']
-                    } for message in event_messages}
+                blocks += event.generate_blocks() + [{"type": "divider"}]
+                text += f"{event.generate_text()}\n\n"
 
-                # used to quickly lookup if a message has been posted for a particular channel
-                posted_channels_set = set(
-                    message['slack_channel_id'] for message in event_messages)
-
-                for slack_channel_id in channels:
-                    await post_message_for_channel(
-                        conn=conn,
-                        event=event,
-                        slack_channel_id=slack_channel_id,
-                        message_details=message_details,
-                        posted_channels_set=posted_channels_set)
+            await post_or_update_messages(conn, week_start, blocks, text)
 
 
-async def post_message_for_channel(conn,
-                                    event,
-                                    slack_channel_id,
-                                    message_details,
-                                    posted_channels_set):
-    """Posts or updates a message in a slack channel for an event"""
-    if (slack_channel_id in posted_channels_set and
-            event.generate_text() == message_details[slack_channel_id]["message"]):
-        print(f"{event.uuid} in {slack_channel_id} hasn't changed, not updating")
+async def post_or_update_messages(conn, week, blocks, text):
+    """Posts or updates a message in a slack channel for a week"""
+    channels = await database.get_slack_channel_ids(conn)
+    messages = await database.get_messages(conn, week)
 
-    elif slack_channel_id in posted_channels_set:
-        print(f"updating event {event.uuid} in {slack_channel_id}")
+    # used to lookup the message id and message for a particular
+    # channel
+    message_details = {message['slack_channel_id']: {
+        "timestamp": message['message_timestamp'],
+        "message": message['message']
+    } for message in messages}
 
-        slack_response = await APP.client.chat_update(
-            ts=message_details[slack_channel_id]["timestamp"],
-            channel=slack_channel_id,
-            blocks=event.generate_blocks(),
-            text=event.generate_text())
+    # used to quickly lookup if a message has been posted for a
+    # particular channel
+    posted_channels_set = set(
+        message['slack_channel_id'] for message in messages)
 
-    else:
-        # channel_id is the internal sqlite ID of the channel row
-        # this is not slack's channel id!!
-        channel_id = await database.get_channel_id(conn, slack_channel_id)
-        print(f"posting event {event.uuid} in {slack_channel_id}")
+    for slack_channel_id in channels:
+        if (slack_channel_id in posted_channels_set and
+                text == message_details[slack_channel_id]["message"]):
+            print(f"Week of {week.strftime('%B %-d')} in {slack_channel_id} "
+                  "hasn't changed, not updating")
 
-        slack_response = await APP.client.chat_postMessage(
-            channel=slack_channel_id,
-            blocks=event.generate_blocks(),
-            text=event.generate_text(),
-            unfurl_links=False,
-            unfurl_media=False)
+        elif slack_channel_id in posted_channels_set:
+            print(f"updating week {week.strftime('%B %-d')} "
+                  f"in {slack_channel_id}")
 
-        await database.create_event_message(conn,
-                                            event.uuid,
-                                            event.generate_text(),
-                                            slack_response['ts'],
-                                            channel_id)
+            timestamp = message_details[slack_channel_id]["timestamp"]
+            slack_response = await APP.client.chat_update(
+                ts=timestamp,
+                channel=slack_channel_id,
+                blocks=blocks,
+                text=text)
+
+            await database.update_message(conn, week, text, timestamp, slack_channel_id)
+
+        else:
+            print(f"posting week {week.strftime('%B %-d')} "
+                  f"in {slack_channel_id}")
+
+            slack_response = await APP.client.chat_postMessage(
+                channel=slack_channel_id,
+                blocks=blocks,
+                text=text,
+                unfurl_links=False,
+                unfurl_media=False)
+
+            await database.create_message(conn, week, text, slack_response['ts'], slack_channel_id)
 
 
 if __name__ == "__main__":
@@ -159,7 +177,7 @@ if __name__ == "__main__":
         target=asyncio.run, args=(periodically_check_api(),))
     thread.start()
 
-    # start slack APP
+    # start slack app
     APP.start(port=int(os.environ.get("PORT").strip("\"\'")))
 
 CONN.close()
