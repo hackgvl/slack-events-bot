@@ -76,48 +76,59 @@ async def check_api(conn):
     """Check the api for updates and update any existing messages"""
     async with aiohttp.ClientSession() as session:
         async with session.get("https://events.openupstate.org/api/gtc") as resp:
-            # filter events for only those that are happening for the next week
+            # get timezone aware today
             today = datetime.date.today()
-            probe_date = datetime.datetime(
-                today.year, today.month, today.day, tzinfo=pytz.utc) + datetime.timedelta(days=5)
-            week_start = probe_date - datetime.timedelta(
-                days=(probe_date.weekday() % 7) + 1)
-            week_end = week_start + datetime.timedelta(days=7)
+            today = datetime.datetime(
+                today.year, today.month, today.day, tzinfo=pytz.utc)
 
-            blocks = [
-                {
-                    "type": "header",
-                    "text":  {
-                        "type": "plain_text",
-                        "text": ("HackGreenville Events for the week of "
-                                 f"{week_start.strftime('%B %-d')}")
-                    }
-                },
-                {
-                    "type": "divider"
-                }
-            ]
+            # keep current week's post up to date
+            await parse_events_for_week(conn, today, resp)
 
-            text = (f"HackGreenville Events for the week of {week_start.strftime('%B %-d')}"
-                    "\n\n===\n\n")
+            # potentially post next week 5 days early
+            probe_date = today + datetime.timedelta(days=5)
+            await parse_events_for_week(conn, probe_date, resp)
 
-            for event_data in await resp.json():
-                event = Event.from_event_json(event_data)
 
-                # ignore event if it's not in the current week
-                if event.time < week_start or event.time > week_end:
-                    continue
+async def parse_events_for_week(conn, probe_date, resp):
+    """Parses events for the week containing the probe date"""
+    week_start = probe_date - datetime.timedelta(
+        days=(probe_date.weekday() % 7) + 1)
+    week_end = week_start + datetime.timedelta(days=7)
 
-                # ignore event if it has a non-supported status
-                if event.status not in ["cancelled", "upcoming", "past"]:
-                    print(f"Couldn't parse event {event.uuid} "
-                          f"with status: {event.status}")
-                    continue
+    blocks = [
+        {
+            "type": "header",
+            "text":  {
+                "type": "plain_text",
+                "text": ("HackGreenville Events for the week of "
+                         f"{week_start.strftime('%B %-d')}")
+            }
+        },
+        {
+            "type": "divider"
+        }
+    ]
 
-                blocks += event.generate_blocks() + [{"type": "divider"}]
-                text += f"{event.generate_text()}\n\n"
+    text = (f"HackGreenville Events for the week of {week_start.strftime('%B %-d')}"
+            "\n\n===\n\n")
 
-            await post_or_update_messages(conn, week_start, blocks, text)
+    for event_data in await resp.json():
+        event = Event.from_event_json(event_data)
+
+        # ignore event if it's not in the current week
+        if event.time < week_start or event.time > week_end:
+            continue
+
+        # ignore event if it has a non-supported status
+        if event.status not in ["cancelled", "upcoming", "past"]:
+            print(f"Couldn't parse event {event.uuid} "
+                  f"with status: {event.status}")
+            continue
+
+        blocks += event.generate_blocks() + [{"type": "divider"}]
+        text += f"{event.generate_text()}\n\n"
+
+    await post_or_update_messages(conn, week_start, blocks, text)
 
 
 async def post_or_update_messages(conn, week, blocks, text):
