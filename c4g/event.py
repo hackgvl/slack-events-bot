@@ -53,20 +53,6 @@ class Event:
             },
             {
                 "type": "section",
-                "fields": [
-                    {
-                        "type": "mrkdwn",
-                        "text": truncate_string(self.group_name)
-
-                    },
-                    {
-                        "type": "mrkdwn",
-                        "text": f"<{self.url}|*Link* :link:>"
-                    }
-                ]
-            },
-            {
-                "type": "section",
                 "text": {
                     "type": "plain_text",
                     "text": truncate_string(self.description)
@@ -77,18 +63,21 @@ class Event:
                 "fields": [
                     {
                         "type": "mrkdwn",
+                        "text": f"*{truncate_string(self.group_name)}*"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"<{self.url}|*Link* :link:>"
+                    },
+                    {
+                        "type": "mrkdwn",
                         "text": "*Status*"
 
                     },
                     {
                         "type": "mrkdwn",
                         "text": print_status(self.status)
-                    }
-                ]
-            },
-            {
-                "type": "section",
-                "fields": [
+                    },
                     {
                         "type": "mrkdwn",
                         "text": "*Location*"
@@ -97,12 +86,7 @@ class Event:
                     {
                         "type": "mrkdwn",
                         "text": get_location_url(self.location)
-                    }
-                ]
-            },
-            {
-                "type": "section",
-                "fields": [
+                    },
                     {
                         "type": "mrkdwn",
                         "text": "*Time*"
@@ -117,9 +101,9 @@ class Event:
 
     def generate_text(self):
         """Compose a text string of event information for backup"""
-        return (f"Name: {truncate_string(self.title)}\n"
-                f"Link: {self.url}\n"
+        return (f"{truncate_string(self.title)}\n"
                 f"Description: {truncate_string(self.description)}\n"
+                f"Link: {self.url}\n"
                 f"Status: {print_status(self.status)}\n"
                 f"Location: {self.location}\n"
                 f"Time: {print_datetime(self.time)}")
@@ -143,7 +127,7 @@ def parse_location(event_json):
     return f"{event_json['venue']['name']}"
 
 
-def truncate_string(string, length=500):
+def truncate_string(string, length=250):
     """Truncate string and add ellipses if it's too long"""
     return string[:length] + (string[length:] and "...")
 
