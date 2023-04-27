@@ -79,9 +79,9 @@ async def check_api(conn):
             # filter events for only those that are happening for the next week
             today = datetime.date.today()
             probe_date = datetime.datetime(
-                today.year, today.month, today.day, tzinfo=pytz.utc) + datetime.timedelta(days=3)
+                today.year, today.month, today.day, tzinfo=pytz.utc) + datetime.timedelta(days=5)
             week_start = probe_date - datetime.timedelta(
-                days=probe_date.weekday() % 7)
+                days=(probe_date.weekday() % 7) + 1)
             week_end = week_start + datetime.timedelta(days=7)
 
             blocks = [
