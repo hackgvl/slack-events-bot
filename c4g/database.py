@@ -17,6 +17,7 @@ def create_tables(conn):
 			id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 			event_uuid TEXT NOT NULL,
 			message_timestamp TEXT NOT NULL,
+            message TEXT NOT NULL,
 			channel_id INTEGER NOT NULL,
 				CONSTRAINT fk_channel_id
 				FOREIGN KEY(channel_id) REFERENCES channels(id)
@@ -30,13 +31,13 @@ def create_tables(conn):
     conn.commit()
 
 
-async def create_event_message(conn, event_uuid, message_timestamp, channel_id):
+async def create_event_message(conn, event_uuid, message, message_timestamp, channel_id):
     """Create a record of a message sent in slack for an event"""
     cur = conn.cursor()
     cur.execute(
-        """INSERT INTO messages (event_uuid, message_timestamp, channel_id)
-            VALUES (?, ?, ?)""",
-        [event_uuid, message_timestamp, channel_id]
+        """INSERT INTO messages (event_uuid, message, message_timestamp, channel_id)
+            VALUES (?, ?, ?, ?)""",
+        [event_uuid, message, message_timestamp, channel_id]
     )
 
     # saves the change to the database
@@ -57,13 +58,15 @@ async def get_event_messages(conn, event_uuid):
     """Get all messages sent in slack for an event"""
     cur = conn.cursor()
     cur.execute(
-        """SELECT m.message_timestamp, c.slack_channel_id
+        """SELECT m.message, m.message_timestamp, c.slack_channel_id
             FROM messages m
             JOIN channels c ON m.channel_id = c.id
             WHERE m.event_uuid = ?""",
         [event_uuid]
     )
-    return [{'message_timestamp': x[0], 'slack_channel_id': x[1]} for x in cur.fetchall()]
+    return [{'message': x[0],
+             'message_timestamp': x[1],
+             'slack_channel_id': x[2]} for x in cur.fetchall()]
 
 
 async def get_slack_channel_ids(conn):

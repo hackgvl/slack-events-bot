@@ -82,48 +82,71 @@ async def check_api(conn):
                 parser.isoparse(event_data['time']) < furthest_allowed_date), await resp.json())
 
             for event_data in filtered_events:
-                if (event_data['status'] == "cancelled" or
-                    event_data['status'] == "upcoming" or
-                        event_data['status'] == "past"):
-                    event = Event.from_event_json(event_data)
-                    event_messages = await database.get_event_messages(conn, event.uuid)
+                if event_data['status'] not in ["cancelled", "upcoming", "past"]:
+                    print(f"Couldn\'t parse event {event_data['uuid']} "
+                          "with status: {event_data['status']}")
+                    continue
 
-                    # used to lookup the message id for a particular channel
-                    channel_to_uuid = {
-                        message['slack_channel_id']:
-                            message['message_timestamp'] for message in event_messages}
+                event = Event.from_event_json(event_data)
+                event_messages = await database.get_event_messages(conn, event.uuid)
 
-                    # used to quickly lookup if a message has been posted for a particular channel
-                    posted_channels_set = set(
-                        message['slack_channel_id'] for message in event_messages)
+                # used to lookup the message id and message for a particular channel
+                message_details = {
+                    message['slack_channel_id']: {
+                        "timestamp": message['message_timestamp'],
+                        "message": message['message']
+                    } for message in event_messages}
 
-                    for slack_channel_id in channels:
-                        if slack_channel_id in posted_channels_set:
-                            print(
-                                f"updating event {event.uuid} in {slack_channel_id}")
-                            slack_response = await APP.client.chat_update(
-                                ts=channel_to_uuid[slack_channel_id],
-                                channel=slack_channel_id,
-                                blocks=event.create_slack_message(),
-                                text=event.create_backup_message_text())
-                        else:
-                            # channel_id is the internal sqlite ID of the channel row
-                            # this is not slack's channel id!!
-                            channel_id = await database.get_channel_id(conn, slack_channel_id)
-                            print(
-                                f"posting event {event.uuid} in {slack_channel_id}")
-                            slack_response = await APP.client.chat_postMessage(
-                                channel=slack_channel_id,
-                                blocks=event.create_slack_message(),
-                                text=event.create_backup_message_text(),
-                                unfurl_links=False,
-                                unfurl_media=False)
-                            await database.create_event_message(conn, event.uuid,
-                                                                slack_response['ts'], channel_id)
-                else:
-                    print(
-                        f"Couldn\'t parse event {event_data['uuid']}"
-                        f" with status: {event_data['status']}")
+                # used to quickly lookup if a message has been posted for a particular channel
+                posted_channels_set = set(
+                    message['slack_channel_id'] for message in event_messages)
+
+                for slack_channel_id in channels:
+                    await post_message_for_channel(
+                        conn=conn,
+                        event=event,
+                        slack_channel_id=slack_channel_id,
+                        message_details=message_details,
+                        posted_channels_set=posted_channels_set)
+
+
+async def post_message_for_channel(conn,
+                                    event,
+                                    slack_channel_id,
+                                    message_details,
+                                    posted_channels_set):
+    """Posts or updates a message in a slack channel for an event"""
+    if (slack_channel_id in posted_channels_set and
+            event.create_backup_message_text() == message_details[slack_channel_id]["message"]):
+        print(f"{event.uuid} in {slack_channel_id} hasn't changed, not updating")
+
+    elif slack_channel_id in posted_channels_set:
+        print(f"updating event {event.uuid} in {slack_channel_id}")
+
+        slack_response = await APP.client.chat_update(
+            ts=message_details[slack_channel_id]["timestamp"],
+            channel=slack_channel_id,
+            blocks=event.create_slack_message(),
+            text=event.create_backup_message_text())
+
+    else:
+        # channel_id is the internal sqlite ID of the channel row
+        # this is not slack's channel id!!
+        channel_id = await database.get_channel_id(conn, slack_channel_id)
+        print(f"posting event {event.uuid} in {slack_channel_id}")
+
+        slack_response = await APP.client.chat_postMessage(
+            channel=slack_channel_id,
+            blocks=event.create_slack_message(),
+            text=event.create_backup_message_text(),
+            unfurl_links=False,
+            unfurl_media=False)
+
+        await database.create_event_message(conn,
+                                            event.uuid,
+                                            event.create_backup_message_text(),
+                                            slack_response['ts'],
+                                            channel_id)
 
 
 if __name__ == "__main__":
