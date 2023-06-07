@@ -1,15 +1,15 @@
 # c4g-events
 
 A Slack bot that relays information from
-[OpenUpstate](http://www.openupstate.org/)'s events API to Slack channels!
+HackGreenville Labs' _Events API_ to Slack channels!
 
 ## Repository
 
 You can find the repository on
-[Github](github.com:codeforgreenville/c4g-events).
+[Github](github.com:hackgvl/c4g-events).
 
 To download this repo locally, clone it with `git clone
-git@github.com:codeforgreenville/c4g-events.git`
+git@github.com:hackgvl/c4g-events.git`
 
 ## Docker instructions for hosting
 
@@ -60,7 +60,7 @@ git@github.com:codeforgreenville/c4g-events.git`
 ## Docker instructions for building
 
 1. Clone the repo using the instructions above and enter the new directory.
-1. Modify `docker-compose.yml` by replacing `image: codeforgreenville/c4g-events` with the following:
+1. Modify `docker-compose.yml` by replacing `image: hackgvl/c4g-events` with the following:
 ```
     build:
       context: ./
