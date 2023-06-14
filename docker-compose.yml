@@ -1,9 +1,9 @@
 version: "3"
 
 services:
-  c4g-events:
-    image: codeforgreenville/c4g-events
-    container_name: c4g-events
+  eventsbot:
+    image: hackgvl/eventsbot
+    container_name: eventsbot
     restart: always
     environment:
       - BOT_TOKEN=bot_token_here
@@ -11,6 +11,6 @@ services:
       - PORT=3000
       - TZ=US/Eastern
     volumes:
-      - ./c4g.db:/usr/src/app/c4g.db
+      - ./eventsbot.db:/usr/src/app/eventsbot.db
     ports:
       - 127.0.0.1:3000:3000

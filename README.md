@@ -1,15 +1,14 @@
-# c4g-events
+# eventsbot
 
-A Slack bot that relays information from
-HackGreenville Labs' _Events API_ to Slack channels!
+A Slack bot that relays information from HackGreenville Labs' _Events API_ to
+Slack channels!
 
 ## Repository
 
-You can find the repository on
-[Github](github.com:hackgvl/c4g-events).
+You can find the repository on [Github](github.com:hackgvl/eventsbot).
 
 To download this repo locally, clone it with `git clone
-git@github.com:hackgvl/c4g-events.git`
+git@github.com:hackgvl/eventsbot.git`
 
 ## Docker instructions for hosting
 
@@ -24,11 +23,12 @@ git@github.com:hackgvl/c4g-events.git`
    the `volumes:` binding like below:
 ```
     volumes:
-      - ./my-new-database-subdirectory/c4g.db:/usr/src/app/c4g.db
+      - ./my-new-database-subdirectory/eventsbot.db:/usr/src/app/eventsbot.db
 ```
 1. Run `docker-compose pull` to pull the latest version of the container and
    it's dependencies.
-1. Start the app by doing `docker-compose up` or `docker-compose -d` to run in detached mode.
+1. Start the app by doing `docker-compose up` or `docker-compose -d` to run in
+   detached mode.
 
 ## Host Installation
 
@@ -55,12 +55,13 @@ git@github.com:hackgvl/c4g-events.git`
 1. Activate the venv with `source env/bin/activate`
     1. Use `deactivate` to exit the venv if needed.
 1. Install dependencies using `pip install -r requirements.txt`
-1. Run the app with `python c4g-events.py`!
+1. Run the app with `python src/bot.py`!
 
 ## Docker instructions for building
 
 1. Clone the repo using the instructions above and enter the new directory.
-1. Modify `docker-compose.yml` by replacing `image: hackgvl/c4g-events` with the following:
+1. Modify `docker-compose.yml` by replacing `image: hackgvl/eventsbot` with the
+   following:
 ```
     build:
       context: ./
@@ -72,7 +73,7 @@ git@github.com:hackgvl/c4g-events.git`
    the `volumes:` binding like below:
 ```
     volumes:
-      - ./my-new-database-subdirectory/c4g.db:/usr/src/app/c4g.db
+      - ./my-new-database-subdirectory/eventsbot.db:/usr/src/app/eventsbot.db
 ```
 1. Build and start the app with `docker-compose up --force-recreate --no-deps`
     1. You can just start the app by doing `docker-compose up` or

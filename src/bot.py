@@ -1,4 +1,4 @@
-"""The c4g-event slack bot"""
+"""The hackgreenville labs slack bot"""
 
 import asyncio
 import datetime
@@ -8,10 +8,10 @@ import sys
 import threading
 
 import aiohttp
-import database
 import pytz
-from event import Event
 from slack_bolt.app.async_app import AsyncApp
+import database
+from event import Event
 
 # configure app
 APP = AsyncApp(
@@ -19,7 +19,7 @@ APP = AsyncApp(
     signing_secret=os.environ.get("SIGNING_SECRET")
 )
 
-DBPATH = os.path.abspath(os.environ.get("DB_PATH", "./c4g.db"))
+DBPATH = os.path.abspath(os.environ.get("DB_PATH", "./eventsbot.db"))
 CONN = sqlite3.connect(DBPATH)
 
 
@@ -44,9 +44,9 @@ async def add_channel(ack, say, logger, command):
     if command['channel_id'] is not None:
         try:
             await database.add_channel(CONN, command['channel_id'])
-            await ack("Added channel to c4g-events 👍")
+            await ack("Added channel to eventsbot 👍")
         except sqlite3.IntegrityError:
-            await ack("c4g-events has already been activated for this channel")
+            await ack("eventsbot has already been activated for this channel")
 
 
 @APP.command("/remove_channel")
@@ -57,9 +57,9 @@ async def remove_channel(ack, say, logger, command):
     if command['channel_id'] is not None:
         try:
             await database.remove_channel(CONN, command['channel_id'])
-            await ack("Removed channel from c4g-events 👍")
+            await ack("Removed channel from eventsbot 👍")
         except sqlite3.IntegrityError:
-            await ack("c4g-events is not activated for this channel")
+            await ack("eventsbot is not activated for this channel")
 
 
 @APP.command("/check_api")

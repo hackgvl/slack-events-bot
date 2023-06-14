@@ -163,4 +163,4 @@ cython_debug/
 .envrc
 
 # database
-c4g.db
+eventsbot.db

@@ -2,7 +2,7 @@
 
 
 def create_tables(conn):
-    """Create database tables needed for c4g-events"""
+    """Create database tables needed for eventsbot"""
     cur = conn.cursor()
 
     cur.executescript("""

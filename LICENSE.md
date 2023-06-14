@@ -1,4 +1,4 @@
-Copyright (c) 2022 Code for Greenville
+Copyright (c) 2023 HackGreenville Labs
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
