@@ -1,5 +1,6 @@
 name: upload-to-docker-hub
 on:
+  workflow_dispatch:
   push:
     branches:
       - stable
