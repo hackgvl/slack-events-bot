@@ -44,9 +44,9 @@ async def add_channel(ack, say, logger, command):
     if command['channel_id'] is not None:
         try:
             await database.add_channel(CONN, command['channel_id'])
-            await ack("Added channel to eventsbot 👍")
+            await ack("Added channel to slack events bot 👍")
         except sqlite3.IntegrityError:
-            await ack("eventsbot has already been activated for this channel")
+            await ack("slack events bot has already been activated for this channel")
 
 
 @APP.command("/remove_channel")
@@ -57,9 +57,9 @@ async def remove_channel(ack, say, logger, command):
     if command['channel_id'] is not None:
         try:
             await database.remove_channel(CONN, command['channel_id'])
-            await ack("Removed channel from eventsbot 👍")
+            await ack("Removed channel from slack events bot 👍")
         except sqlite3.IntegrityError:
-            await ack("eventsbot is not activated for this channel")
+            await ack("slack events bot is not activated for this channel")
 
 
 @APP.command("/check_api")

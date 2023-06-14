@@ -1,14 +1,15 @@
-# eventsbot
+# slack-events-bot
 
 A Slack bot that relays information from HackGreenville Labs' _Events API_ to
 Slack channels!
 
 ## Repository
 
-You can find the repository on [Github](github.com:hackgvl/eventsbot).
+You can find the repository on
+[Github](https://github.com/hackgvl/slack-events-bot).
 
 To download this repo locally, clone it with `git clone
-git@github.com:hackgvl/eventsbot.git`
+git@github.com:hackgvl/slack-events-bot.git`
 
 ## Docker instructions for hosting
 
