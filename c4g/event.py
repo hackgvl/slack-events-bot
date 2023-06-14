@@ -56,10 +56,7 @@ class Event:
                 "text": {
                     "type": "plain_text",
                     "text": truncate_string(self.description)
-                }
-            },
-            {
-                "type": "section",
+                },
                 "fields": [
                     {
                         "type": "mrkdwn",
