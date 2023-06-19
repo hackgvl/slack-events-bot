@@ -80,6 +80,25 @@ git@github.com:hackgvl/slack-events-bot.git`
     1. You can just start the app by doing `docker-compose up` or
        `docker-compose -d` to run in detached mode once it's been built
 
+## Development tips
+
+This project uses some handy tools to assist with development. Please feel free
+to give recommendations for more if there are any that would be a good idea!
+
+- [direnv](https://direnv.net/) suggestions with `.envrc.example` for an easy
+  way to set environment variables per-directory.
+  - Once you have direnv installed, copy `.envrc.example` to `.envrc` and
+    replace with your slack dev application keys. Then, your slack application
+    keys will only be available when you enter that directory!
+- [asdf version manager](https://asdf-vm.com/) and
+  [asdf-python](https://github.com/asdf-community/asdf-python) with
+  `.tool-versions` for an easy way to use the right python version
+  per-directory.
+- `pylint src/` to lint the source code in the `src/` folder. We want this to
+  stay at 10/10!
+- `pipreqs --force` to save a new version of `requirements.txt`. This is only
+  necessary if you're adding or removing a new dependency
+
 ## License
 
 This bot is licensed under the MIT license.
