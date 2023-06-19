@@ -106,8 +106,12 @@ The following needs to be included in an appropriate Apache .conf file, usually 
 
 ## Development Tips
 
-This project uses some handy tools to assist with development. Please feel free
-to give recommendations for more if there are any that would be a good idea!
+This project uses some handy tools to assist with development. It's also
+recommended that you use a [python virtual
+environment](https://docs.python.org/3/library/venv.html) to help separate this
+project's dependencies from the rest of your system, and vice versa. Please feel
+free to give recommendations for any more tools if there are any that would be a
+good idea!
 
 - [direnv](https://direnv.net/) suggestions with `.envrc.example` for an easy
   way to set environment variables per-directory.
