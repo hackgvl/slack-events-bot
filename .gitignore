@@ -163,4 +163,4 @@ cython_debug/
 .envrc
 
 # database
-eventsbot.db
+slack-events-bot.db

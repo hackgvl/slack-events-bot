@@ -1,5 +1,5 @@
 export BOT_TOKEN="bot_token_here"
 export SIGNING_SECRET="signing_secret_here"
-export DATABASE_PATH="./eventsbot.db"
+export DATABASE_PATH="./slack-events-bot.db"
 export PORT="3000"
 export TZ="US/Eastern"

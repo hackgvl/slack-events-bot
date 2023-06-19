@@ -19,7 +19,7 @@ APP = AsyncApp(
     signing_secret=os.environ.get("SIGNING_SECRET")
 )
 
-DBPATH = os.path.abspath(os.environ.get("DB_PATH", "./eventsbot.db"))
+DBPATH = os.path.abspath(os.environ.get("DB_PATH", "./slack-events-bot.db"))
 CONN = sqlite3.connect(DBPATH)
 
 

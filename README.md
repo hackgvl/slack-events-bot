@@ -24,7 +24,7 @@ git@github.com:hackgvl/slack-events-bot.git`
    the `volumes:` binding like below:
 ```
     volumes:
-      - ./my-new-database-subdirectory/eventsbot.db:/usr/src/app/eventsbot.db
+      - ./my-new-database-subdirectory/slack-events-bot.db:/usr/src/app/slack-events-bot.db
 ```
 1. Run `docker-compose pull` to pull the latest version of the container and
    it's dependencies.
@@ -61,7 +61,7 @@ git@github.com:hackgvl/slack-events-bot.git`
 ## Docker instructions for building
 
 1. Clone the repo using the instructions above and enter the new directory.
-1. Modify `docker-compose.yml` by replacing `image: hackgvl/eventsbot` with the
+1. Modify `docker-compose.yml` by replacing `image: hackgvl/slack-events-bot` with the
    following:
 ```
     build:
@@ -74,7 +74,7 @@ git@github.com:hackgvl/slack-events-bot.git`
    the `volumes:` binding like below:
 ```
     volumes:
-      - ./my-new-database-subdirectory/eventsbot.db:/usr/src/app/eventsbot.db
+      - ./my-new-database-subdirectory/slack-events-bot.db:/usr/src/app/slack-events-bot.db
 ```
 1. Build and start the app with `docker-compose up --force-recreate --no-deps`
     1. You can just start the app by doing `docker-compose up` or

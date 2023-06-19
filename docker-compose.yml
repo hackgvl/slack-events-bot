@@ -1,9 +1,9 @@
 version: "3"
 
 services:
-  eventsbot:
-    image: hackgvl/eventsbot
-    container_name: eventsbot
+  slack-events-bot:
+    image: hackgvl/slack-events-bot
+    container_name: slack-events-bot
     restart: always
     environment:
       - BOT_TOKEN=bot_token_here
@@ -11,6 +11,6 @@ services:
       - PORT=3000
       - TZ=US/Eastern
     volumes:
-      - ./eventsbot.db:/usr/src/app/eventsbot.db
+      - ./slack-events-bot.db:/usr/src/app/slack-events-bot.db
     ports:
       - 127.0.0.1:3000:3000
