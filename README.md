@@ -30,6 +30,7 @@ git@github.com:hackgvl/slack-events-bot.git`
    it's dependencies.
 1. Start the app by doing `docker-compose up` or `docker-compose up -d` to run in
    detached mode.  Run `docker ps` to verify the status.
+1. If desired, [configure Docker to start automatically upon server reboot](https://docs.docker.com/engine/install/linux-postinstall/#configure-docker-to-start-on-boot-with-systemd).
 1. To check the app's error log from within the Docker container, run `docker-compose logs -f`
 1. Proxy a web server to the Docker container's port, as defined in the docker-composer.yml
 
