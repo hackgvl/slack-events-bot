@@ -11,7 +11,7 @@ You can find the repository on
 To download this repo locally, clone it with `git clone
 git@github.com:hackgvl/slack-events-bot.git`
 
-## Docker instructions for hosting
+## Docker Instructions
 
 1. Download the `docker-compose.yml` file to your desired hosting location and
    navigate to it
@@ -28,10 +28,21 @@ git@github.com:hackgvl/slack-events-bot.git`
 ```
 1. Run `docker-compose pull` to pull the latest version of the container and
    it's dependencies.
-1. Start the app by doing `docker-compose up` or `docker-compose -d` to run in
-   detached mode.
+1. Start the app by doing `docker-compose up` or `docker-compose up -d` to run in
+   detached mode.  Run `docker ps` to verify the status.
+1. If desired, [configure Docker to start automatically upon server reboot](https://docs.docker.com/engine/install/linux-postinstall/#configure-docker-to-start-on-boot-with-systemd).
+1. To check the app's error log from within the Docker container, run `docker-compose logs -f`
+1. Proxy a web server to the Docker container's port, as defined in the docker-composer.yml
 
-## Host Installation
+### Apache Example
+The following needs to be included in an appropriate Apache .conf file, usually as part of an existing VirtualHost directive.
+
+```
+    # Proxy requests to /events/slack to the 'Slack Bolt' Docker container port
+    ProxyPass /slack/events http://127.0.0.1:7331/slack/events
+```
+
+## Native (non-Docker) App Installation
 
 1. Clone the repo using the instructions above and enter the new directory.
 1. Install the python version in `.tool-versions`. I recommend that you use
@@ -58,7 +69,17 @@ git@github.com:hackgvl/slack-events-bot.git`
 1. Install dependencies using `pip install -r requirements.txt`
 1. Run the app with `python src/bot.py`!
 
-## Docker instructions for building
+1. Proxy a web server to the running app's port, as defined in the .envrc `PORT` value.
+
+### Apache Example
+The following needs to be included in an appropriate Apache .conf file, usually as part of an existing VirtualHost directive.
+
+```
+    # Proxy requests to /events/slack to the running 'Slack Bolt' app port
+    ProxyPass /slack/events http://127.0.0.1:3000/slack/events
+```
+
+## Docker Build Instructions
 
 1. Clone the repo using the instructions above and enter the new directory.
 1. Modify `docker-compose.yml` by replacing `image: hackgvl/slack-events-bot` with the
@@ -80,7 +101,7 @@ git@github.com:hackgvl/slack-events-bot.git`
     1. You can just start the app by doing `docker-compose up` or
        `docker-compose -d` to run in detached mode once it's been built
 
-## Development tips
+## Development Tips
 
 This project uses some handy tools to assist with development. Please feel free
 to give recommendations for more if there are any that would be a good idea!
