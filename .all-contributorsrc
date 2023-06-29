@@ -1,0 +1,32 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "oliviasculley",
+      "name": "Olivia Sculley",
+      "avatar_url": "https://avatars.githubusercontent.com/u/88074048?v=4",
+      "profile": "https://olivia.sculley.dev",
+      "contributions": [
+        "ideas",
+        "code",
+        "bug",
+        "question",
+        "doc",
+        "maintenance",
+        "infra"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "projectName": "slack-events-bot",
+  "projectOwner": "hackgvl"
+}
