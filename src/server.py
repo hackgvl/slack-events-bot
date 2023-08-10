@@ -19,7 +19,7 @@ from fastapi.responses import PlainTextResponse
 from starlette.types import Message
 
 import database
-from bot import APP_HANDLER, periodically_check_api
+from bot import APP_HANDLER, periodically_check_api, periodically_delete_old_messages
 
 API = FastAPI()
 
@@ -167,6 +167,19 @@ if __name__ == "__main__":
     database.create_tables()
     print("Created database tables!")
 
+    # once a day, purge rows older than 90 days
+    thread = threading.Thread(
+        target=asyncio.run,
+        args=(periodically_delete_old_messages(),),
+        name="periodic_message_deletion",
+    )
+    try:
+        thread.daemon = True
+        thread.start()
+    except (KeyboardInterrupt, SystemExit):
+        thread.join(timeout=60)
+        sys.exit()
+
     # start checking api every hour in background thread
     thread = threading.Thread(
         target=asyncio.run, args=(periodically_check_api(),), name="periodic_api_check"
@@ -175,7 +188,7 @@ if __name__ == "__main__":
         thread.daemon = True
         thread.start()
     except (KeyboardInterrupt, SystemExit):
-        thread.join()
+        thread.join(timeout=60)
         sys.exit()
 
     # Default port is 3000

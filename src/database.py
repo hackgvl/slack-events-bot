@@ -147,6 +147,30 @@ async def remove_channel(channel_id):
         cur.execute("DELETE FROM channels WHERE slack_channel_id = ?", [channel_id])
 
 
+async def delete_old_messages(days_back=90):
+    """delete all messages and cooldowns with timestamp older than current timestamp - days_back"""
+    for conn in get_connection(commit=True):
+        cur = conn.cursor()
+        cur.execute(
+            "DELETE FROM messages where cast(message_timestamp as decimal) < ?",
+            [
+                (
+                    datetime.datetime.now(datetime.timezone.utc)
+                    - datetime.timedelta(days=days_back)
+                ).timestamp()
+            ],
+        )
+        cur.execute(
+            "DELETE FROM cooldowns where expires_at < ?",
+            [
+                (
+                    datetime.datetime.now(datetime.timezone.utc)
+                    - datetime.timedelta(days=days_back)
+                ).isoformat()
+            ],
+        )
+
+
 async def create_cooldown(accessor: str, resource: str, cooldown_minutes: int) -> None:
     """
     Upserts a cooldown record for an entity which will let the system know when to make the resource

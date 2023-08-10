@@ -136,6 +136,21 @@ async def check_api():
             await parse_events_for_week(probe_date, resp)
 
 
+async def periodically_delete_old_messages():
+    """Once a day delete messages older than 90 days
+    This function runs in a thread, meaning that it needs to create it's own
+    database connection. This is OK however, since it only runs once a day
+    """
+    print("Deleting old messages once a day")
+    while True:
+        try:
+            await database.delete_old_messages()
+        except Exception:  # pylint: disable=broad-except
+            print(traceback.format_exc())
+            os._exit(1)
+        await asyncio.sleep(60 * 60 * 24)  # 24 hours
+
+
 async def periodically_check_api():
     """Periodically check the api every hour
 
