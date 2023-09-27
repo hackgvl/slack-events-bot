@@ -5,3 +5,4 @@
 .tool-versions
 Dockerfile
 docker-compose.yml
+pyproject.toml
