@@ -1,0 +1,21 @@
+name: Run CI
+
+on:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Black
+        uses: microsoft/action-python@0.7.0
+        with:
+          black: true
+
+      - name: Pylint
+        uses: microsoft/action-python@0.7.0
+        with:
+          pylint: true
