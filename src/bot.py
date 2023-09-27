@@ -15,8 +15,7 @@ from event import Event
 
 # configure app
 APP = AsyncApp(
-    token=os.environ.get("BOT_TOKEN"),
-    signing_secret=os.environ.get("SIGNING_SECRET")
+    token=os.environ.get("BOT_TOKEN"), signing_secret=os.environ.get("SIGNING_SECRET")
 )
 
 DBPATH = os.path.abspath(os.environ.get("DB_PATH", "./slack-events-bot.db"))
@@ -41,9 +40,9 @@ async def add_channel(ack, say, logger, command):
     """Handle adding a slack channel to the bot"""
     del say
     logger.info(f"{command['command']} from {command['channel_id']}")
-    if command['channel_id'] is not None:
+    if command["channel_id"] is not None:
         try:
-            await database.add_channel(CONN, command['channel_id'])
+            await database.add_channel(CONN, command["channel_id"])
             await ack("Added channel to slack events bot 👍")
         except sqlite3.IntegrityError:
             await ack("slack events bot has already been activated for this channel")
@@ -54,9 +53,9 @@ async def remove_channel(ack, say, logger, command):
     """Handle removing a slack channel from the bot"""
     del say
     logger.info(f"{command['command']} from {command['channel_id']}")
-    if command['channel_id'] is not None:
+    if command["channel_id"] is not None:
         try:
-            await database.remove_channel(CONN, command['channel_id'])
+            await database.remove_channel(CONN, command["channel_id"])
             await ack("Removed channel from slack events bot 👍")
         except sqlite3.IntegrityError:
             await ack("slack events bot is not activated for this channel")
@@ -67,7 +66,7 @@ async def trigger_check_api(ack, say, logger, command):
     """Handle manually rechecking the api for updates"""
     del say
     logger.info(f"{command['command']} from {command['channel_id']}")
-    if command['channel_id'] is not None:
+    if command["channel_id"] is not None:
         await ack("Checking api for events 👍")
         await check_api(CONN)
 
@@ -79,7 +78,8 @@ async def check_api(conn):
             # get timezone aware today
             today = datetime.date.today()
             today = datetime.datetime(
-                today.year, today.month, today.day, tzinfo=pytz.utc)
+                today.year, today.month, today.day, tzinfo=pytz.utc
+            )
 
             # keep current week's post up to date
             await parse_events_for_week(conn, today, resp)
@@ -91,26 +91,27 @@ async def check_api(conn):
 
 async def parse_events_for_week(conn, probe_date, resp):
     """Parses events for the week containing the probe date"""
-    week_start = probe_date - datetime.timedelta(
-        days=(probe_date.weekday() % 7) + 1)
+    week_start = probe_date - datetime.timedelta(days=(probe_date.weekday() % 7) + 1)
     week_end = week_start + datetime.timedelta(days=7)
 
     blocks = [
         {
             "type": "header",
-            "text":  {
+            "text": {
                 "type": "plain_text",
-                "text": ("HackGreenville Events for the week of "
-                         f"{week_start.strftime('%B %-d')}")
-            }
+                "text": (
+                    "HackGreenville Events for the week of "
+                    f"{week_start.strftime('%B %-d')}"
+                ),
+            },
         },
-        {
-            "type": "divider"
-        }
+        {"type": "divider"},
     ]
 
-    text = (f"HackGreenville Events for the week of {week_start.strftime('%B %-d')}"
-            "\n\n===\n\n")
+    text = (
+        f"HackGreenville Events for the week of {week_start.strftime('%B %-d')}"
+        "\n\n===\n\n"
+    )
 
     for event_data in await resp.json():
         event = Event.from_event_json(event_data)
@@ -121,8 +122,7 @@ async def parse_events_for_week(conn, probe_date, resp):
 
         # ignore event if it has a non-supported status
         if event.status not in ["cancelled", "upcoming", "past"]:
-            print(f"Couldn't parse event {event.uuid} "
-                  f"with status: {event.status}")
+            print(f"Couldn't parse event {event.uuid} " f"with status: {event.status}")
             continue
 
         blocks += event.generate_blocks() + [{"type": "divider"}]
@@ -138,47 +138,52 @@ async def post_or_update_messages(conn, week, blocks, text):
 
     # used to lookup the message id and message for a particular
     # channel
-    message_details = {message['slack_channel_id']: {
-        "timestamp": message['message_timestamp'],
-        "message": message['message']
-    } for message in messages}
+    message_details = {
+        message["slack_channel_id"]: {
+            "timestamp": message["message_timestamp"],
+            "message": message["message"],
+        }
+        for message in messages
+    }
 
     # used to quickly lookup if a message has been posted for a
     # particular channel
-    posted_channels_set = set(
-        message['slack_channel_id'] for message in messages)
+    posted_channels_set = set(message["slack_channel_id"] for message in messages)
 
     for slack_channel_id in channels:
-        if (slack_channel_id in posted_channels_set and
-                text == message_details[slack_channel_id]["message"]):
-            print(f"Week of {week.strftime('%B %-d')} in {slack_channel_id} "
-                  "hasn't changed, not updating")
+        if (
+            slack_channel_id in posted_channels_set
+            and text == message_details[slack_channel_id]["message"]
+        ):
+            print(
+                f"Week of {week.strftime('%B %-d')} in {slack_channel_id} "
+                "hasn't changed, not updating"
+            )
 
         elif slack_channel_id in posted_channels_set:
-            print(f"updating week {week.strftime('%B %-d')} "
-                  f"in {slack_channel_id}")
+            print(f"updating week {week.strftime('%B %-d')} " f"in {slack_channel_id}")
 
             timestamp = message_details[slack_channel_id]["timestamp"]
             slack_response = await APP.client.chat_update(
-                ts=timestamp,
-                channel=slack_channel_id,
-                blocks=blocks,
-                text=text)
+                ts=timestamp, channel=slack_channel_id, blocks=blocks, text=text
+            )
 
             await database.update_message(conn, week, text, timestamp, slack_channel_id)
 
         else:
-            print(f"posting week {week.strftime('%B %-d')} "
-                  f"in {slack_channel_id}")
+            print(f"posting week {week.strftime('%B %-d')} " f"in {slack_channel_id}")
 
             slack_response = await APP.client.chat_postMessage(
                 channel=slack_channel_id,
                 blocks=blocks,
                 text=text,
                 unfurl_links=False,
-                unfurl_media=False)
+                unfurl_media=False,
+            )
 
-            await database.create_message(conn, week, text, slack_response['ts'], slack_channel_id)
+            await database.create_message(
+                conn, week, text, slack_response["ts"], slack_channel_id
+            )
 
 
 if __name__ == "__main__":
@@ -187,8 +192,7 @@ if __name__ == "__main__":
     print("Created database tables!")
 
     # start checking api every hour in background thread
-    thread = threading.Thread(target=asyncio.run,
-                              args=(periodically_check_api(),))
+    thread = threading.Thread(target=asyncio.run, args=(periodically_check_api(),))
     try:
         thread.daemon = True
         thread.start()
@@ -197,6 +201,6 @@ if __name__ == "__main__":
         sys.exit()
 
     # start slack app
-    APP.start(port=int(os.environ.get("PORT").strip("\"\'")))
+    APP.start(port=int(os.environ.get("PORT").strip("\"'")))
 
 CONN.close()
