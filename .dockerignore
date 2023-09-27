@@ -3,6 +3,7 @@
 .github
 .gitignore
 .tool-versions
+app_manifest.yml
 Dockerfile
 docker-compose.yml
 pyproject.toml
