@@ -5,7 +5,8 @@ def create_tables(conn):
     """Create database tables needed for slack events bot"""
     cur = conn.cursor()
 
-    cur.executescript("""
+    cur.executescript(
+        """
 		CREATE TABLE IF NOT EXISTS channels (
 			id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 			slack_channel_id TEXT UNIQUE NOT NULL
@@ -25,7 +26,8 @@ def create_tables(conn):
 		);
 
 		CREATE INDEX IF NOT EXISTS week_index ON messages (week);
-	""")
+	"""
+    )
 
     # saves the change to the database
     conn.commit()
@@ -36,14 +38,15 @@ async def create_message(conn, week, message, message_timestamp, slack_channel_i
     cur = conn.cursor()
 
     # get database's channel id for slack channel id
-    cur.execute("SELECT id FROM channels WHERE slack_channel_id = ?",
-                [slack_channel_id])
+    cur.execute(
+        "SELECT id FROM channels WHERE slack_channel_id = ?", [slack_channel_id]
+    )
     channel_id = cur.fetchone()[0]
 
     cur.execute(
         """INSERT INTO messages (week, message, message_timestamp, channel_id)
             VALUES (?, ?, ?, ?)""",
-        [week, message, message_timestamp, channel_id]
+        [week, message, message_timestamp, channel_id],
     )
 
     # saves the change to the database
@@ -55,15 +58,16 @@ async def update_message(conn, week, message, message_timestamp, slack_channel_i
     cur = conn.cursor()
 
     # get database's channel id for slack channel id
-    cur.execute("SELECT id FROM channels WHERE slack_channel_id = ?",
-                [slack_channel_id])
+    cur.execute(
+        "SELECT id FROM channels WHERE slack_channel_id = ?", [slack_channel_id]
+    )
     channel_id = cur.fetchone()[0]
 
     cur.execute(
         """UPDATE messages
             SET message = ?
             WHERE week = ? AND message_timestamp = ? AND channel_id = ?""",
-        [message, week, message_timestamp, channel_id]
+        [message, week, message_timestamp, channel_id],
     )
 
     # saves the change to the database
@@ -78,11 +82,12 @@ async def get_messages(conn, week):
             FROM messages m
             JOIN channels c ON m.channel_id = c.id
             WHERE m.week = ?""",
-        [week]
+        [week],
     )
-    return [{'message': x[0],
-             'message_timestamp': x[1],
-             'slack_channel_id': x[2]} for x in cur.fetchall()]
+    return [
+        {"message": x[0], "message_timestamp": x[1], "slack_channel_id": x[2]}
+        for x in cur.fetchall()
+    ]
 
 
 async def get_slack_channel_ids(conn):
@@ -95,8 +100,9 @@ async def get_slack_channel_ids(conn):
 async def add_channel(conn, slack_channel_id):
     """Add a slack channel to post in for the bot"""
     cur = conn.cursor()
-    cur.execute("INSERT INTO channels (slack_channel_id) VALUES (?)", [
-                slack_channel_id])
+    cur.execute(
+        "INSERT INTO channels (slack_channel_id) VALUES (?)", [slack_channel_id]
+    )
 
     # saves the change to the database
     conn.commit()
@@ -105,8 +111,7 @@ async def add_channel(conn, slack_channel_id):
 async def remove_channel(conn, channel_id):
     """Remove a slack channel to post in from the bot"""
     cur = conn.cursor()
-    cur.execute(
-        "DELETE FROM channels WHERE slack_channel_id = ?", [channel_id])
+    cur.execute("DELETE FROM channels WHERE slack_channel_id = ?", [channel_id])
 
     # saves the change to the database
     conn.commit()
