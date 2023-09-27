@@ -1,7 +1,7 @@
+*.md
 .envrc.example
+.github
 .gitignore
 .tool-versions
-*.md
-docker-compose.yml
 Dockerfile
-.github
+docker-compose.yml
