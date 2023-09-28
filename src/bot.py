@@ -6,7 +6,7 @@ import os
 import sqlite3
 import sys
 import threading
-
+import traceback
 import aiohttp
 import pytz
 from slack_bolt.app.async_app import AsyncApp
@@ -30,8 +30,12 @@ async def periodically_check_api():
     """
     print("Checking api every hour")
     while True:
-        with sqlite3.connect(DBPATH) as conn:
-            await check_api(conn)
+        try:
+            with sqlite3.connect(DBPATH) as conn:
+                await check_api(conn)
+        except Exception:  # pylint: disable=broad-except
+            print(traceback.format_exc())
+            os._exit(1)
         await asyncio.sleep(60 * 60)  # 60 minutes x 60 seconds
 
 
