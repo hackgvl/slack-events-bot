@@ -199,8 +199,6 @@ API = FastAPI()
 @API.post("/slack/events")
 async def endpoint(req: Request):
     """The front door for all Slack requests"""
-    print(req.body)
-
     return await APP_HANDLER.handle(req)
 
 @API.get("/healthz", tags=["Utility"])
