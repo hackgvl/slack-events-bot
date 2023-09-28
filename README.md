@@ -122,10 +122,14 @@ good idea!
   [asdf-python](https://github.com/asdf-community/asdf-python) with
   `.tool-versions` for an easy way to use the right python version
   per-directory.
-- `pylint src/` to lint the source code in the `src/` folder. We want this to
-  stay at 10/10!
+- [black](https://black.readthedocs.io/en/stable/) via `black src/` to format
+  the source code in the `src/` folder.
+- [pylint](https://pylint.readthedocs.io/en/stable/) via `pylint src/` to lint
+  the source code in the `src/` folder. We want this to stay at 10/10!
 - `pipreqs --force` to save a new version of `requirements.txt`. This is only
-  necessary if you're adding or removing a new dependency
+  necessary if you're adding or removing a new dependency. If you're updating
+  the requirements, make sure to add it to the list of dependencies in
+  `pyproject.toml` as well!
 
 ## License
 

@@ -16,10 +16,10 @@ keywords = [
   "slack"
 ]
 dependencies = [
-  "aiohttp==3.8.5",
-  "python_dateutil==2.8.2",
-  "pytz==2023.3",
-  "slack_bolt==1.18.0"
+  "aiohttp",
+  "python_dateutil",
+  "pytz",
+  "slack_bolt"
 ]
 
 [project.urls]
