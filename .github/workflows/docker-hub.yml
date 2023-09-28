@@ -1,10 +1,9 @@
 name: Upload to Docker Hub
 
 on:
-  workflow_dispatch:
   push:
     branches:
-      - stable
+      - dev
 
 jobs:
   buildx:
