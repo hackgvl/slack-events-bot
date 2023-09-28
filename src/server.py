@@ -27,6 +27,7 @@ APP_HANDLER = AsyncSlackRequestHandler(APP)
 DBPATH = os.path.abspath(os.environ.get("DB_PATH", "./slack-events-bot.db"))
 CONN = sqlite3.connect(DBPATH)
 
+
 async def periodically_check_api():
     """Periodically check the api every hour
 
@@ -194,12 +195,15 @@ async def post_or_update_messages(conn, week, blocks, text):
                 conn, week, text, slack_response["ts"], slack_channel_id
             )
 
+
 API = FastAPI()
+
 
 @API.post("/slack/events")
 async def endpoint(req: Request):
     """The front door for all Slack requests"""
     return await APP_HANDLER.handle(req)
+
 
 @API.get("/healthz", tags=["Utility"])
 async def heathcheck(req: Request):
@@ -207,6 +211,7 @@ async def heathcheck(req: Request):
     del req
 
     return { "status": "Lookin' good!" }
+
 
 if __name__ == "__main__":
     # create database tables if they don't exist
