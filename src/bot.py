@@ -16,7 +16,7 @@ from fastapi import FastAPI, Request, HTTPException
 from slack_bolt.async_app import AsyncApp
 from slack_bolt.adapter.fastapi.async_handler import AsyncSlackRequestHandler
 
-
+# configure app
 APP = AsyncApp(
     token=os.environ.get("BOT_TOKEN"), signing_secret=os.environ.get("SIGNING_SECRET")
 )
