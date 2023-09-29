@@ -2,7 +2,12 @@ version: "3"
 
 services:
   slack-events-bot:
-    image: hackgvl/slack-events-bot
+    # image: hackgvl/slack-events-bot
+    build:
+      context: .
+      dockerfile: Dockerfile
+    labels:
+      - "autoheal=true"
     container_name: slack-events-bot
     restart: always
     environment:
@@ -14,3 +19,19 @@ services:
       - ./slack-events-bot.db:/usr/src/app/slack-events-bot.db
     ports:
       - 127.0.0.1:3000:3000
+    healthcheck:
+      test: curl -f "http://localhost:3000/healthz" || exit 1
+      interval: 2m30s
+      timeout: 30s
+      retries: 3
+      start_period: 1m
+  autoheal:
+    image: willfarrell/autoheal:latest
+    tty: true
+    restart: always
+    environment:
+      - AUTOHEAL_INTERVAL=60
+      - AUTOHEAL_START_PERIOD=120
+      - AUTOHEAL_DEFAULT_STOP_TIMEOUT=10
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
