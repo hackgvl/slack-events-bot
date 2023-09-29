@@ -33,6 +33,15 @@
         "projectManagement",
         "doc"
       ]
+    },
+    {
+      "login": "edenxcodes",
+      "name": "Eden Oluigbo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/97955302?v=4",
+      "profile": "https://github.com/edenxcodes",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
