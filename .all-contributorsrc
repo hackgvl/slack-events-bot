@@ -33,6 +33,17 @@
         "projectManagement",
         "doc"
       ]
+    },
+    {
+      "login": "ThorntonMatthewD",
+      "name": "Matthew Thornton",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44626690?v=4",
+      "profile": "https://github.com/ThorntonMatthewD",
+      "contributions": [
+        "code",
+        "infra",
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7,
