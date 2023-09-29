@@ -206,13 +206,13 @@ async def endpoint(req: Request):
 @API.get("/healthz", tags=["Utility"])
 async def health_check(req: Request):
     """
-        Route used to test if the server is still online.
+    Route used to test if the server is still online.
 
-        Returns a 500 response if one or more threads are found to be dead. Enough of these
-        in a row will cause the docker container to be placed into an unhealthy state and soon
-        restarted.
+    Returns a 500 response if one or more threads are found to be dead. Enough of these
+    in a row will cause the docker container to be placed into an unhealthy state and soon
+    restarted.
 
-        Returns a 200 response otherwise.
+    Returns a 200 response otherwise.
     """
     del req
 
@@ -220,10 +220,10 @@ async def health_check(req: Request):
         if not thd.is_alive():
             raise HTTPException(
                 status_code=500,
-                detail=f"The {thd.name} thread has died. This container will soon restart."
+                detail=f"The {thd.name} thread has died. This container will soon restart.",
             )
 
-    return { "detail": "Everything is lookin' good!" }
+    return {"detail": "Everything is lookin' good!"}
 
 
 if __name__ == "__main__":
@@ -233,9 +233,7 @@ if __name__ == "__main__":
 
     # start checking api every hour in background thread
     thread = threading.Thread(
-        target=asyncio.run,
-        args=(periodically_check_api(),),
-        name="periodic_api_check"
+        target=asyncio.run, args=(periodically_check_api(),), name="periodic_api_check"
     )
     try:
         thread.daemon = True
