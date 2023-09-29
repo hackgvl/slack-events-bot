@@ -9,12 +9,13 @@ import threading
 import traceback
 import aiohttp
 import pytz
+import database
 import uvicorn
 from event import Event
 from fastapi import FastAPI, Request, HTTPException
 from slack_bolt.async_app import AsyncApp
 from slack_bolt.adapter.fastapi.async_handler import AsyncSlackRequestHandler
-import database
+
 
 APP = AsyncApp(
     token=os.environ.get("BOT_TOKEN"), signing_secret=os.environ.get("SIGNING_SECRET")
