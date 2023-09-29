@@ -22,8 +22,19 @@ services:
       timeout: 30s
       retries: 3
       start_period: 1m
+
+  ##
+  #
+  # This service is only necessary to run if you'd like for the slack-events-bot container
+  # to be automatically restarted if it were to be marked as unhealthy.
+  #
+  # The autoheal service is not run by default. In order to spin it up please use:
+  #   docker-compose --profile auothealing up
+  #
+  ##
   autoheal:
     image: willfarrell/autoheal:latest
+    profiles: ["auothealing"]
     tty: true
     restart: always
     environment:

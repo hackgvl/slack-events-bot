@@ -37,6 +37,16 @@ git@github.com:hackgvl/slack-events-bot.git`
 1. To check the app's error log from within the Docker container, run `docker-compose logs -f`
 1. Proxy a web server to the Docker container's port, as defined in the docker-composer.yml
 
+### Autohealing
+[willfarrell/autoheal](https://github.com/willfarrell/docker-autoheal) ([Docker Hub](https://hub.docker.com/r/willfarrell/autoheal/)) is used
+to provide autohealing capabilities that will automatically restart containers that repeatedly fail healthchecks. This service is not required for
+local development, and as a result it is set to not run by default. If you would like to spin up this container for local testing purposes then please
+specify the `autohealing` profile whenever executing `docker-compose up`:
+
+```bash
+docker-compose --profile auothealing up
+```
+
 ### Apache Example
 The following needs to be included in an appropriate Apache .conf file, usually as part of an existing VirtualHost directive.
 
