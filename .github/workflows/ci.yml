@@ -4,7 +4,7 @@ on:
   pull_request:
 
 jobs:
-  lint:
+  lint_and_test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout project
@@ -30,4 +30,7 @@ jobs:
           pylint: true
 
       - name: Pytest
-        run: python -m pytest
+        uses: microsoft/action-python@0.7.0
+        with:
+          testing: true
+
