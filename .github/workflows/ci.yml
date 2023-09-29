@@ -28,3 +28,6 @@ jobs:
         uses: microsoft/action-python@0.7.0
         with:
           pylint: true
+
+      - name: Pytest
+        run: python -m pytest
