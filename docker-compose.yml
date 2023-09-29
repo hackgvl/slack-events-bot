@@ -2,10 +2,7 @@ version: "3"
 
 services:
   slack-events-bot:
-    # image: hackgvl/slack-events-bot
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: hackgvl/slack-events-bot
     labels:
       - "autoheal=true"
     container_name: slack-events-bot
