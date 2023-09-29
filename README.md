@@ -1,6 +1,6 @@
 # slack-events-bot
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 A Slack bot that relays information from HackGreenville Labs' _Events API_ to
@@ -147,6 +147,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://olivia.sculley.dev"><img src="https://avatars.githubusercontent.com/u/88074048?v=4?s=100" width="100px;" alt="Olivia Sculley"/><br /><sub><b>Olivia Sculley</b></sub></a><br /><a href="#ideas-oliviasculley" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/hackgvl/slack-events-bot/commits?author=oliviasculley" title="Code">💻</a> <a href="https://github.com/hackgvl/slack-events-bot/issues?q=author%3Aoliviasculley" title="Bug reports">🐛</a> <a href="#question-oliviasculley" title="Answering Questions">💬</a> <a href="https://github.com/hackgvl/slack-events-bot/commits?author=oliviasculley" title="Documentation">📖</a> <a href="#maintenance-oliviasculley" title="Maintenance">🚧</a> <a href="#infra-oliviasculley" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/allella"><img src="https://avatars.githubusercontent.com/u/1777776?v=4?s=100" width="100px;" alt="Jim Ciallella"/><br /><sub><b>Jim Ciallella</b></sub></a><br /><a href="#infra-allella" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#maintenance-allella" title="Maintenance">🚧</a> <a href="#projectManagement-allella" title="Project Management">📆</a> <a href="https://github.com/hackgvl/slack-events-bot/commits?author=allella" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/edenxcodes"><img src="https://avatars.githubusercontent.com/u/97955302?v=4?s=100" width="100px;" alt="Eden Oluigbo"/><br /><sub><b>Eden Oluigbo</b></sub></a><br /><a href="https://github.com/hackgvl/slack-events-bot/commits?author=edenxcodes" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
