@@ -17,9 +17,37 @@ keywords = [
 ]
 dependencies = [
   "aiohttp",
-  "python_dateutil",
+  "aiosignal",
+  "annotated-types",
+  "anyio",
+  "async-timeout",
+  "attrs",
+  "certifi",
+  "charset-normalizer",
+  "click",
+  "fastapi",
+  "frozenlist",
+  "h11",
+  "httpcore",
+  "httpx",
+  "idna",
+  "iniconfig",
+  "multidict",
+  "packaging",
+  "pluggy",
+  "pydantic",
+  "pydantic_core",
+  "pytest",
+  "python-dateutil",
   "pytz",
-  "slack_bolt"
+  "six",
+  "slack-bolt",
+  "slack-sdk",
+  "sniffio",
+  "starlette",
+  "typing_extensions",
+  "uvicorn",
+  "yarl"
 ]
 
 [project.urls]
