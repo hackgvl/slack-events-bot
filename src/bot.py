@@ -1,5 +1,6 @@
 """The hackgreenville labs slack bot"""
 
+import logging
 import asyncio
 import datetime
 import os
@@ -9,14 +10,19 @@ import threading
 import traceback
 import aiohttp
 import pytz
-from slack_bolt.app.async_app import AsyncApp
-import database
+import uvicorn
 from event import Event
+from fastapi import FastAPI, Request
+from slack_bolt.async_app import AsyncApp
+from slack_bolt.adapter.fastapi.async_handler import AsyncSlackRequestHandler
+import database
 
-# configure app
+logging.basicConfig(level=logging.DEBUG)
+
 APP = AsyncApp(
     token=os.environ.get("BOT_TOKEN"), signing_secret=os.environ.get("SIGNING_SECRET")
 )
+APP_HANDLER = AsyncSlackRequestHandler(APP)
 
 DBPATH = os.path.abspath(os.environ.get("DB_PATH", "./slack-events-bot.db"))
 CONN = sqlite3.connect(DBPATH)
@@ -190,6 +196,23 @@ async def post_or_update_messages(conn, week, blocks, text):
             )
 
 
+API = FastAPI()
+
+
+@API.post("/slack/events")
+async def endpoint(req: Request):
+    """The front door for all Slack requests"""
+    return await APP_HANDLER.handle(req)
+
+
+@API.get("/healthz", tags=["Utility"])
+async def heathcheck(req: Request):
+    """Route used to test if the server is still online"""
+    del req
+
+    return { "status": "Lookin' good!" }
+
+
 if __name__ == "__main__":
     # create database tables if they don't exist
     database.create_tables(CONN)
@@ -204,7 +227,6 @@ if __name__ == "__main__":
         thread.join()
         sys.exit()
 
-    # start slack app
-    APP.start(port=int(os.environ.get("PORT").strip("\"'")))
+    uvicorn.run(API, port=int(int(os.environ.get("PORT").strip("\"'"))), host="0.0.0.0")
 
 CONN.close()
