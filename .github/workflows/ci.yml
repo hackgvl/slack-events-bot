@@ -5,6 +5,14 @@ on:
 
 jobs:
   lint_and_test:
+    strategy:
+      matrix:
+        python_version: ['3.11.5']
+
+    env:
+      SLACK_BOT_TOKEN: "fake"
+      SIGNING_SECRET: "also_fake"
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout project
@@ -13,7 +21,7 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11.5'
+          python-version: ${{ matrix.python_version }}
           cache: 'pip'
 
       - name: Install Python dependencies
@@ -23,8 +31,17 @@ jobs:
         uses: microsoft/action-python@0.7.0
         with:
           black: true
+          python_version: ${{ matrix.python_version }}
 
       - name: Pylint
         uses: microsoft/action-python@0.7.0
         with:
           pylint: true
+
+      - name: Pytest
+        uses: microsoft/action-python@0.7.0
+        with:
+          pytest: true
+          workdir: '.'
+          coverage: false
+          python_version: ${{ matrix.python_version }}

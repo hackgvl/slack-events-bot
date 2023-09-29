@@ -3,7 +3,8 @@ name = "slack-events-bot"
 description = "An automated Slack bot to syndicate local events into Slack channels in a weekly digest format. Event data is sourced from HackGreenville Labs Events API."
 readme = "README.md"
 requires-python = ">=3.11"
-license = "MIT"
+license = { text = "MIT" }
+version="0.1.0"
 authors = [
   { name = "Olivia Sculley", email = "olivia@sculley.dev" },
 ]
@@ -13,6 +14,7 @@ keywords = [
   "bolt",
   "bot",
   "pylint",
+  "pytest",
   "slack"
 ]
 dependencies = [
