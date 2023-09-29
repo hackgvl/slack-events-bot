@@ -32,5 +32,5 @@ jobs:
       - name: Pytest
         uses: microsoft/action-python@0.7.0
         with:
-          testing: true
+          pytest: true
 
