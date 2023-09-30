@@ -85,7 +85,6 @@ async def trigger_check_api(ack, say, logger, command):
         await check_api(CONN)
 
 
-@cached(cache=TTLCache(maxsize=MAX_BYTES, ttl=15 * 60))
 async def check_api(conn):
     """Check the api for updates and update any existing messages"""
     async with aiohttp.ClientSession() as session:
@@ -203,6 +202,7 @@ async def post_or_update_messages(conn, week, blocks, text):
 
 API = FastAPI()
 
+
 def check_api_being_requested(path: str, payload: bytes) -> bool:
     """Determines if a user is attempting to execute the /check_api command."""
     decoded_payload = payload.decode("utf-8")
@@ -211,7 +211,9 @@ def check_api_being_requested(path: str, payload: bytes) -> bool:
 
 
 def check_api_on_cooldown() -> bool:
-    """Checks to see if the /check_api command has been run in the last 15 minutes."""
+    """Checks to see if the /check_api command has been run in the last 15 minutes in the
+    specified server (denoted by its base_url).
+    """
     return True
 
 
@@ -230,7 +232,8 @@ async def rate_limit_check_api(req: Request, call_next):
             )
         )
 
-    return await call_next(req
+    return await call_next(req)
+
 
 @API.post("/slack/events")
 async def endpoint(req: Request):
