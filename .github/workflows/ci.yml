@@ -4,11 +4,7 @@ on:
   pull_request:
 
 jobs:
-  lint_and_test:
-    strategy:
-      matrix:
-        python_version: ['3.11.5']
-
+  test:
     env:
       SLACK_BOT_TOKEN: "fake"
       SIGNING_SECRET: "also_fake"
@@ -21,27 +17,17 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python_version }}
+          python-version: '3.11.5'
           cache: 'pip'
 
       - name: Install Python dependencies
-        run: pip install -r requirements.txt
+        run: pip install .[test]
 
       - name: Black
-        uses: microsoft/action-python@0.7.0
-        with:
-          black: true
-          python_version: ${{ matrix.python_version }}
+        run: python -m black --check src/
 
       - name: Pylint
-        uses: microsoft/action-python@0.7.0
-        with:
-          pylint: true
+        run: python -m pylint src/
 
       - name: Pytest
-        uses: microsoft/action-python@0.7.0
-        with:
-          pytest: true
-          workdir: '.'
-          coverage: false
-          python_version: ${{ matrix.python_version }}
+        run: python -m pytest tests/
