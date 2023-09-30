@@ -18,38 +18,20 @@ keywords = [
   "slack"
 ]
 dependencies = [
-  "aiohttp",
-  "aiosignal",
-  "annotated-types",
-  "anyio",
-  "async-timeout",
-  "attrs",
-  "certifi",
-  "charset-normalizer",
-  "click",
-  "fastapi",
-  "frozenlist",
-  "h11",
-  "httpcore",
-  "httpx",
-  "idna",
-  "iniconfig",
-  "multidict",
-  "packaging",
-  "pluggy",
-  "pydantic",
-  "pydantic_core",
-  "pytest",
-  "python-dateutil",
-  "pytz",
-  "six",
-  "slack-bolt",
-  "slack-sdk",
-  "sniffio",
-  "starlette",
-  "typing_extensions",
-  "uvicorn",
-  "yarl"
+  "aiohttp==3.8.5",
+  "fastapi==0.103.2",
+  "python_dateutil==2.8.2",
+  "pytz==2023.3",
+  "slack_bolt==1.18.0",
+  "uvicorn==0.23.2"
+]
+
+[project.optional-dependencies]
+test = [
+    "black==23.9.1",
+    "httpx==0.25.0",
+    "pylint==2.17.5",
+    "pytest==7.4.2"
 ]
 
 [project.urls]
