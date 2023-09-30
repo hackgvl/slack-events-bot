@@ -11,9 +11,8 @@ import aiohttp
 import pytz
 import uvicorn
 
-from asyncache import cached
-from cachetools import TTLCache
 from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import PlainTextResponse
 from slack_bolt.async_app import AsyncApp
 from slack_bolt.adapter.fastapi.async_handler import AsyncSlackRequestHandler
 import database
@@ -204,6 +203,34 @@ async def post_or_update_messages(conn, week, blocks, text):
 
 API = FastAPI()
 
+def check_api_being_requested(path: str, payload: bytes) -> bool:
+    """Determines if a user is attempting to execute the /check_api command."""
+    decoded_payload = payload.decode("utf-8")
+
+    return path == "/slack/events" and "command=%2Fcheck_api" in decoded_payload
+
+
+def check_api_on_cooldown() -> bool:
+    """Checks to see if the /check_api command has been run in the last 15 minutes."""
+    return True
+
+
+@API.middleware("http")
+async def rate_limit_check_api(req: Request, call_next):
+    """Looks to see if /check_api has been run recently, and returns an error if so."""
+
+    if (
+        check_api_being_requested(req.scope["path"], await req.body())
+        and check_api_on_cooldown()
+    ):
+        return PlainTextResponse(
+            (
+                "This command has been run recently and is on a cooldown period. "
+                "Please try again in a little while!"
+            )
+        )
+
+    return await call_next(req
 
 @API.post("/slack/events")
 async def endpoint(req: Request):
