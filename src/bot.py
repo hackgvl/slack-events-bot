@@ -18,7 +18,6 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import PlainTextResponse
 from slack_bolt.async_app import AsyncApp
 from slack_bolt.adapter.fastapi.async_handler import AsyncSlackRequestHandler
-from starlette.background import BackgroundTask
 from starlette.types import Message
 
 import database
