@@ -1,11 +1,12 @@
 """
     Tests for the bot.py file.
 """
-import pytest
 import threading
+import pytest
 
-import database
 import helpers
+import database
+
 
 
 def test_health_check_healthy_threads(test_client):
