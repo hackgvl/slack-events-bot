@@ -22,15 +22,15 @@ def threads_appear_dead(monkeypatch):
 
 
 @pytest.fixture
-def db_with_cleanup():
+def db_cleanup():
     """
-    Fixture to provide a DB connection to tests and then ensure state doesn't bleed over
-    between them.
+    Fixture to clean the database after tests.
     """
     database.create_tables()
 
+    yield
+
     for conn in database.get_connection():
-        yield conn
 
         cur = conn.cursor()
 
@@ -39,7 +39,9 @@ def db_with_cleanup():
             SELECT 'DELETE FROM ' || name
             FROM sqlite_master
             WHERE type = 'table';
-
-            VACUUM;
             """
         )
+
+        conn.commit()
+
+        conn.close()

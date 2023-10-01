@@ -38,7 +38,7 @@ RATE_LIMIT_COPY = (
 
 
 def test_check_api_whenever_someone_executes_it_for_first_time(
-    test_client, db_with_cleanup
+    test_client, db_cleanup
 ):
     """Whenever an entity executes /check_api for the first time it should run successfully."""
     response = test_client.post(
@@ -59,7 +59,7 @@ def test_check_api_whenever_someone_executes_it_for_first_time(
 
 @pytest.mark.asyncio
 async def test_check_api_whenever_someone_executes_it_after_expiry(
-    test_client, db_with_cleanup
+    test_client, db_cleanup
 ):
     """
     Whenever an entity has run /check_api before, and their cooldown window has expired,
@@ -82,7 +82,7 @@ async def test_check_api_whenever_someone_executes_it_after_expiry(
 
 @pytest.mark.asyncio
 async def test_check_api_whenever_someone_executes_it_before_expiry(
-    test_client, db_with_cleanup
+    test_client, db_cleanup
 ):
     """
     Whenever an entity has run /check_api before, and their cooldown window has NOT expired,
