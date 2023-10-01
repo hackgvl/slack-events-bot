@@ -75,7 +75,8 @@ async def test_check_api_whenever_someone_executes_it_after_expiry(
         ),
     )
 
-    #
+    # See:
+    # https://github.com/ThorntonMatthewD/slack-events-bot/blob/11f30d4655226faeaaf7ec4e4dd92eabd2230afb/tests/test_bot.py#L51
     assert response.content.decode("utf-8") != RATE_LIMIT_COPY
 
 
