@@ -18,8 +18,9 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import PlainTextResponse
 from slack_bolt.async_app import AsyncApp
 from slack_bolt.adapter.fastapi.async_handler import AsyncSlackRequestHandler
-import database
+from starlette.background import BackgroundTask
 
+import database
 from event import Event
 
 # configure app
@@ -78,6 +79,9 @@ async def remove_channel(ack, say, logger, command):
 @APP.command("/check_api")
 async def trigger_check_api(ack, say, logger, command):
     """Handle manually rechecking the api for updates"""
+
+    print("\n\n\n\n\ntest\n\n\n\n\n")
+
     del say
     logger.info(f"{command['command']} from {command['channel_id']}")
     if command["channel_id"] is not None:
@@ -235,24 +239,31 @@ async def check_api_on_cooldown(team_domain: Union[str, None]) -> bool:
     If either of those criteria aren't then the resource is on cooldown for the
     accessing entity and we will signal that to the system.
     """
-    resource_name = "check_api"
-
     if team_domain is None:
         # Electing to just return true to let users see a throttle message if this occurs.
         # TODO: Logging
         return True
 
-    expiry = await database.get_cooldown_expiry_time(CONN, team_domain, resource_name)
+    expiry = await database.get_cooldown_expiry_time(CONN, team_domain, "check_api")
 
     if expiry is None:
-        await database.create_cooldown(CONN, team_domain, resource_name, 15)
         return False
 
     if datetime.datetime.now() > datetime.datetime.fromisoformat(expiry):
-        await database.create_cooldown(CONN, team_domain, resource_name, 15)
         return False
 
     return True
+
+
+async def update_check_api_cooldown(team_domain: str | None) -> None:
+    """
+    Creates a new cooldown record for an accessor to the check_api method
+    after they've been permitted access.
+    """
+    if team_domain is None:
+        return
+
+    await database.create_cooldown(CONN, team_domain, "check_api", 15)
 
 
 @API.middleware("http")
@@ -260,17 +271,20 @@ async def rate_limit_check_api(
     req: Request, call_next: Callable[[Request], Awaitable[None]]
 ):
     """Looks to see if /check_api has been run recently, and returns an error if so."""
-    if await check_api_being_requested(
-        req.scope["path"], await req.body()
-    ) and await check_api_on_cooldown(
-        await identify_slack_team_domain(await req.body())
-    ):
-        return PlainTextResponse(
-            (
-                "This command has been run recently and is on a cooldown period. "
-                "Please try again in a little while!"
+    req_body = await req.body()
+
+    if await check_api_being_requested(req.scope["path"], req_body):
+        team_domain = await identify_slack_team_domain(req_body)
+        if await check_api_on_cooldown(team_domain):
+            return PlainTextResponse(
+                (
+                    "This command has been run recently and is on a cooldown period. "
+                    "Please try again in a little while!"
+                )
             )
-        )
+
+        # To prevent timeouts setting cooldowns is a background task.
+        req.background = BackgroundTask(update_check_api_cooldown, team_domain)
 
     return await call_next(req)
 
@@ -278,6 +292,9 @@ async def rate_limit_check_api(
 @API.post("/slack/events")
 async def endpoint(req: Request):
     """The front door for all Slack requests"""
+    print("hitting da slack")
+    print(req)
+    print(req.headers)
     return await APP_HANDLER.handle(req)
 
 
