@@ -28,3 +28,4 @@ def create_slack_request_payload(
     )
 
     return bytes(sample_payload, "utf-8")
+# pylint: enable=too-many-arguments
