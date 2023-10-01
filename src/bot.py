@@ -5,6 +5,7 @@ from typing import Union
 
 import asyncio
 import datetime
+import logging
 import os
 import re
 import sqlite3
@@ -23,6 +24,10 @@ from starlette.types import Message
 
 import database
 from event import Event
+
+logging.basicConfig(
+    format="[%(levelname)s] %(asctime)s - %(message)s", level=logging.INFO
+)
 
 # configure app
 APP = AsyncApp(
@@ -208,8 +213,7 @@ async def identify_slack_team_domain(payload: bytes) -> Union[str, None]:
     match = re.search(r"team_domain=(.+?(?=&))", decoded_payload)
 
     if match is None:
-        # TODO: Log instead and return None to be more graceful
-        raise ValueError("Slack Team ID could not be found.")
+        return logging.error("The team_domain could not be extracted from the payload.")
 
     return match.groups()[0]
 
@@ -235,7 +239,7 @@ async def check_api_on_cooldown(team_domain: Union[str, None]) -> bool:
     """
     if team_domain is None:
         # Electing to just return true to let users see a throttle message if this occurs.
-        # TODO: Logging
+        logging.warning("team_domain was None in check_api_on_cooldown")
         return True
 
     expiry = await database.get_cooldown_expiry_time(team_domain, "check_api")
