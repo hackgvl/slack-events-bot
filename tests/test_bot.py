@@ -37,9 +37,7 @@ RATE_LIMIT_COPY = (
 )
 
 
-def test_check_api_whenever_someone_executes_it_for_first_time(
-    test_client, db_cleanup
-):
+def test_check_api_whenever_someone_executes_it_for_first_time(test_client, db_cleanup):
     """Whenever an entity executes /check_api for the first time it should run successfully."""
     response = test_client.post(
         "/slack/events",

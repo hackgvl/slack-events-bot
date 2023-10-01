@@ -31,7 +31,6 @@ def db_cleanup():
     yield
 
     for conn in database.get_connection():
-
         cur = conn.cursor()
 
         cur.executescript(
