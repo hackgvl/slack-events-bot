@@ -8,7 +8,6 @@ import helpers
 import database
 
 
-
 def test_health_check_healthy_threads(test_client):
     """Happy path scenario for the /healthz route where nothing is wrong."""
     response = test_client.get("healthz")
