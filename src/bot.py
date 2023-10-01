@@ -269,7 +269,9 @@ async def set_body(req: Request, body: bytes):
     Overrides the Request class's __receive method as a workaround to an issue
     where accessing a request body in middleware causes it to become blocking.
 
-    See https://github.com/tiangolo/fastapi/discussions/8187
+    See https://github.com/tiangolo/fastapi/discussions/8187 for the discussion
+    and this post (https://github.com/tiangolo/fastapi/discussions/8187#discussioncomment-5148049)
+    for where this code originates. Thanks, https://github.com/liukelin!
     """
     async def receive() -> Message:
         return {"type": "http.request", "body": body}
