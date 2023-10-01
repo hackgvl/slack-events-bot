@@ -1,5 +1,8 @@
 """The hackgreenville labs slack bot"""
 
+from collections.abc import Awaitable, Callable
+from typing import Union
+
 import asyncio
 import datetime
 import os
@@ -8,12 +11,10 @@ import sqlite3
 import sys
 import threading
 import traceback
-from typing import Union
 import aiohttp
 import pytz
 import uvicorn
 
-from collections.abc import Awaitable, Callable
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import PlainTextResponse
 from slack_bolt.async_app import AsyncApp
@@ -29,9 +30,6 @@ APP = AsyncApp(
 )
 APP_HANDLER = AsyncSlackRequestHandler(APP)
 
-DBPATH = os.path.abspath(os.environ.get("DB_PATH", "./slack-events-bot.db"))
-CONN = sqlite3.connect(DBPATH)
-
 
 async def periodically_check_api():
     """Periodically check the api every hour
@@ -42,8 +40,7 @@ async def periodically_check_api():
     print("Checking api every hour")
     while True:
         try:
-            with sqlite3.connect(DBPATH) as conn:
-                await check_api(conn)
+            await check_api()
         except Exception:  # pylint: disable=broad-except
             print(traceback.format_exc())
             os._exit(1)
@@ -57,7 +54,7 @@ async def add_channel(ack, say, logger, command):
     logger.info(f"{command['command']} from {command['channel_id']}")
     if command["channel_id"] is not None:
         try:
-            await database.add_channel(CONN, command["channel_id"])
+            await database.add_channel(command["channel_id"])
             await ack("Added channel to slack events bot 👍")
         except sqlite3.IntegrityError:
             await ack("slack events bot has already been activated for this channel")
@@ -70,7 +67,7 @@ async def remove_channel(ack, say, logger, command):
     logger.info(f"{command['command']} from {command['channel_id']}")
     if command["channel_id"] is not None:
         try:
-            await database.remove_channel(CONN, command["channel_id"])
+            await database.remove_channel(command["channel_id"])
             await ack("Removed channel from slack events bot 👍")
         except sqlite3.IntegrityError:
             await ack("slack events bot is not activated for this channel")
@@ -83,10 +80,10 @@ async def trigger_check_api(ack, say, logger, command):
     logger.info(f"{command['command']} from {command['channel_id']}")
     if command["channel_id"] is not None:
         await ack("Checking api for events 👍")
-        await check_api(CONN)
+        await check_api()
 
 
-async def check_api(conn):
+async def check_api():
     """Check the api for updates and update any existing messages"""
     async with aiohttp.ClientSession() as session:
         async with session.get("https://events.openupstate.org/api/gtc") as resp:
@@ -97,14 +94,14 @@ async def check_api(conn):
             )
 
             # keep current week's post up to date
-            await parse_events_for_week(conn, today, resp)
+            await parse_events_for_week(today, resp)
 
             # potentially post next week 5 days early
             probe_date = today + datetime.timedelta(days=5)
-            await parse_events_for_week(conn, probe_date, resp)
+            await parse_events_for_week(probe_date, resp)
 
 
-async def parse_events_for_week(conn, probe_date, resp):
+async def parse_events_for_week(probe_date, resp):
     """Parses events for the week containing the probe date"""
     week_start = probe_date - datetime.timedelta(days=(probe_date.weekday() % 7) + 1)
     week_end = week_start + datetime.timedelta(days=7)
@@ -143,13 +140,13 @@ async def parse_events_for_week(conn, probe_date, resp):
         blocks += event.generate_blocks() + [{"type": "divider"}]
         text += f"{event.generate_text()}\n\n"
 
-    await post_or_update_messages(conn, week_start, blocks, text)
+    await post_or_update_messages(week_start, blocks, text)
 
 
-async def post_or_update_messages(conn, week, blocks, text):
+async def post_or_update_messages(week, blocks, text):
     """Posts or updates a message in a slack channel for a week"""
-    channels = await database.get_slack_channel_ids(conn)
-    messages = await database.get_messages(conn, week)
+    channels = await database.get_slack_channel_ids()
+    messages = await database.get_messages(week)
 
     # used to lookup the message id and message for a particular
     # channel
@@ -183,7 +180,7 @@ async def post_or_update_messages(conn, week, blocks, text):
                 ts=timestamp, channel=slack_channel_id, blocks=blocks, text=text
             )
 
-            await database.update_message(conn, week, text, timestamp, slack_channel_id)
+            await database.update_message(week, text, timestamp, slack_channel_id)
 
         else:
             print(f"posting week {week.strftime('%B %-d')} " f"in {slack_channel_id}")
@@ -197,7 +194,7 @@ async def post_or_update_messages(conn, week, blocks, text):
             )
 
             await database.create_message(
-                conn, week, text, slack_response["ts"], slack_channel_id
+                week, text, slack_response["ts"], slack_channel_id
             )
 
 
@@ -241,7 +238,7 @@ async def check_api_on_cooldown(team_domain: Union[str, None]) -> bool:
         # TODO: Logging
         return True
 
-    expiry = await database.get_cooldown_expiry_time(CONN, team_domain, "check_api")
+    expiry = await database.get_cooldown_expiry_time(team_domain, "check_api")
 
     if expiry is None:
         return False
@@ -260,7 +257,7 @@ async def update_check_api_cooldown(team_domain: str | None) -> None:
     if team_domain is None:
         return
 
-    await database.create_cooldown(CONN, team_domain, "check_api", 15)
+    await database.create_cooldown(team_domain, "check_api", 15)
 
 
 async def set_body(req: Request, body: bytes):
@@ -272,6 +269,7 @@ async def set_body(req: Request, body: bytes):
     and this post (https://github.com/tiangolo/fastapi/discussions/8187#discussioncomment-5148049)
     for where this code originates. Thanks, https://github.com/liukelin!
     """
+
     async def receive() -> Message:
         return {"type": "http.request", "body": body}
 
@@ -342,7 +340,7 @@ async def health_check(req: Request):
 
 if __name__ == "__main__":
     # create database tables if they don't exist
-    database.create_tables(CONN)
+    database.create_tables()
     print("Created database tables!")
 
     # start checking api every hour in background thread
@@ -357,5 +355,3 @@ if __name__ == "__main__":
         sys.exit()
 
     uvicorn.run(API, port=int(int(os.environ.get("PORT").strip("\"'"))), host="0.0.0.0")
-
-CONN.close()
