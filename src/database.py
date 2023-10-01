@@ -1,5 +1,9 @@
 """Contains all the functions that interact with the sqlite database"""
 
+import datetime
+import sqlite3
+from typing import Union
+
 
 def create_tables(conn):
     """Create database tables needed for slack events bot"""
@@ -26,6 +30,20 @@ def create_tables(conn):
 		);
 
 		CREATE INDEX IF NOT EXISTS week_index ON messages (week);
+
+        CREATE TABLE IF NOT EXISTS cooldowns (
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+              -- Unique identifier from whomever is accessing the resource. Can be a workspace, channel, user, etc..
+            accessor TEXT NOT NULL,
+              -- Unique identifier for whatever is rate-limited. Can be a method name, service name, etc..
+            resource TEXT NOT NULL,
+            -- ISO8601 timestamp for when the accessor will be allowed to access the resource once again.
+            expires_at TEXT NOT NULL,
+            UNIQUE(accessor,resource)
+        );
+
+        CREATE INDEX IF NOT EXISTS accessor_resource_index ON
+            cooldowns (accessor, resource);
 	"""
     )
 
@@ -115,3 +133,53 @@ async def remove_channel(conn, channel_id):
 
     # saves the change to the database
     conn.commit()
+
+
+async def create_cooldown(
+    conn: sqlite3.Connection, accessor: str, resource: str, cooldown_minutes: int
+) -> None:
+    """
+    Upserts a cooldown record for an entity which will let the system know when to make the resource
+    available to them once again.
+    """
+    cur = conn.cursor()
+
+    cur.execute(
+        """INSERT INTO cooldowns (accessor, resource, expires_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(accessor,resource) DO UPDATE SET
+                accessor=excluded.accessor,
+                resource=excluded.resource,
+                expires_at=excluded.expires_at
+        """,
+        [
+            accessor,
+            resource,
+            (
+                datetime.datetime.now() + datetime.timedelta(minutes=cooldown_minutes)
+            ).isoformat(),
+        ],
+    )
+
+    conn.commit()
+
+
+async def get_cooldown_expiry_time(
+    conn: sqlite3.Connection, accessor: str, resource: str
+) -> Union[str, None]:
+    """
+    Returns the time at which an accessor is able to access a resource
+    or None if no restriction has ever been put in place.
+    """
+    cur = conn.cursor()
+
+    cur.execute(
+        """SELECT expires_at FROM cooldowns
+           WHERE accessor = ? AND resource = ?
+        """,
+        [accessor, resource],
+    )
+
+    expiry_time = cur.fetchone()
+
+    return expiry_time[0] if expiry_time is not None else None
