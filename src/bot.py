@@ -3,14 +3,17 @@
 import asyncio
 import datetime
 import os
+import re
 import sqlite3
 import sys
 import threading
 import traceback
+from typing import Union
 import aiohttp
 import pytz
 import uvicorn
 
+from collections.abc import Awaitable, Callable
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import PlainTextResponse
 from slack_bolt.async_app import AsyncApp
@@ -18,9 +21,6 @@ from slack_bolt.adapter.fastapi.async_handler import AsyncSlackRequestHandler
 import database
 
 from event import Event
-
-# 50kb - Current API responses are around ~11.7kb as of 09/30/2023
-MAX_BYTES = 50000
 
 # configure app
 APP = AsyncApp(
@@ -203,27 +203,67 @@ async def post_or_update_messages(conn, week, blocks, text):
 API = FastAPI()
 
 
-def check_api_being_requested(path: str, payload: bytes) -> bool:
+async def identify_slack_team_domain(payload: bytes) -> Union[str, None]:
+    """Extracts the value of 'team_domain=' from the request body sent by Slack."""
+    decoded_payload = payload.decode("utf-8")
+
+    match = re.search(r"team_domain=(.+?(?=&))", decoded_payload)
+
+    if match is None:
+        # TODO: Log instead and return None to be more graceful
+        raise ValueError("Slack Team ID could not be found.")
+
+    return match.groups()[0]
+
+
+async def check_api_being_requested(path: str, payload: bytes) -> bool:
     """Determines if a user is attempting to execute the /check_api command."""
     decoded_payload = payload.decode("utf-8")
 
     return path == "/slack/events" and "command=%2Fcheck_api" in decoded_payload
 
 
-def check_api_on_cooldown() -> bool:
-    """Checks to see if the /check_api command has been run in the last 15 minutes in the
-    specified server (denoted by its base_url).
+async def check_api_on_cooldown(team_domain: Union[str, None]) -> bool:
     """
+    Checks to see if the /check_api command has been run in the last 15 minutes in the
+    specified server (denoted by its team_domain).
+
+    If an expiry time does not exist, or if the expiry time found is in the past,
+    then the user is allowed to proceed with accessing the check_api method. In both
+    of these instances a new expiry time is created for 15 minutes out.
+
+    If either of those criteria aren't then the resource is on cooldown for the
+    accessing entity and we will signal that to the system.
+    """
+    resource_name = "check_api"
+
+    if team_domain is None:
+        # Electing to just return true to let users see a throttle message if this occurs.
+        # TODO: Logging
+        return True
+
+    expiry = await database.get_cooldown_expiry_time(CONN, team_domain, resource_name)
+
+    if expiry is None:
+        await database.create_cooldown(CONN, team_domain, resource_name, 15)
+        return False
+
+    if datetime.datetime.now() > datetime.datetime.fromisoformat(expiry):
+        await database.create_cooldown(CONN, team_domain, resource_name, 15)
+        return False
+
     return True
 
 
 @API.middleware("http")
-async def rate_limit_check_api(req: Request, call_next):
+async def rate_limit_check_api(
+    req: Request, call_next: Callable[[Request], Awaitable[None]]
+):
     """Looks to see if /check_api has been run recently, and returns an error if so."""
-
-    if (
-        check_api_being_requested(req.scope["path"], await req.body())
-        and check_api_on_cooldown()
+    if await check_api_being_requested(
+        req.scope["path"], await req.body()
+    ) and await check_api_on_cooldown(
+        await identify_slack_team_domain(await req.body())
     ):
         return PlainTextResponse(
             (
