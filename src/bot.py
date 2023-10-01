@@ -79,9 +79,6 @@ async def remove_channel(ack, say, logger, command):
 @APP.command("/check_api")
 async def trigger_check_api(ack, say, logger, command):
     """Handle manually rechecking the api for updates"""
-
-    print("\n\n\n\n\ntest\n\n\n\n\n")
-
     del say
     logger.info(f"{command['command']} from {command['channel_id']}")
     if command["channel_id"] is not None:
@@ -292,9 +289,6 @@ async def rate_limit_check_api(
 @API.post("/slack/events")
 async def endpoint(req: Request):
     """The front door for all Slack requests"""
-    print("hitting da slack")
-    print(req)
-    print(req.headers)
     return await APP_HANDLER.handle(req)
 
 
