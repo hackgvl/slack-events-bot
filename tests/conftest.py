@@ -1,8 +1,9 @@
 """Pytest Fixtures"""
+from threading import Thread
 
 import pytest
 from fastapi.testclient import TestClient
-from threading import Thread
+
 
 from bot import API
 import database
