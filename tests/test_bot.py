@@ -16,8 +16,9 @@ def test_health_check_healthy_threads(test_client):
     assert response.content == b'{"detail":"Everything is lookin\' good!"}'
 
 
-
-def test_health_check_with_a_dead_thread(test_client, threads_appear_dead): # pylint: disable=unused-argument
+def test_health_check_with_a_dead_thread(
+    test_client, threads_appear_dead
+):  # pylint: disable=unused-argument
     """Tests what happens if a dead thread is found whenever this endpoint is hit."""
     response = test_client.get("healthz")
 
@@ -37,7 +38,9 @@ RATE_LIMIT_COPY = (
 )
 
 
-def test_check_api_whenever_someone_executes_it_for_first_time(test_client, db_cleanup): # pylint: disable=unused-argument
+def test_check_api_whenever_someone_executes_it_for_first_time(
+    test_client, db_cleanup
+):  # pylint: disable=unused-argument
     """Whenever an entity executes /check_api for the first time it should run successfully."""
     response = test_client.post(
         "/slack/events",
@@ -57,7 +60,7 @@ def test_check_api_whenever_someone_executes_it_for_first_time(test_client, db_c
 
 @pytest.mark.asyncio
 async def test_check_api_whenever_someone_executes_it_after_expiry(
-    test_client, db_cleanup
+    test_client, db_cleanup  # pylint: disable=unused-argument
 ):
     """
     Whenever an entity has run /check_api before, and their cooldown window has expired,
@@ -80,7 +83,7 @@ async def test_check_api_whenever_someone_executes_it_after_expiry(
 
 @pytest.mark.asyncio
 async def test_check_api_whenever_someone_executes_it_before_expiry(
-    test_client, db_cleanup # pylint: disable=unused-argument
+    test_client, db_cleanup  # pylint: disable=unused-argument
 ):
     """
     Whenever an entity has run /check_api before, and their cooldown window has NOT expired,
@@ -96,4 +99,3 @@ async def test_check_api_whenever_someone_executes_it_before_expiry(
     )
     assert response.status_code == 200
     assert response.content.decode("utf-8") == RATE_LIMIT_COPY
-

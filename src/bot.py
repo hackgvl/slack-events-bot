@@ -247,7 +247,9 @@ async def check_api_on_cooldown(team_domain: Union[str, None]) -> bool:
     if expiry is None:
         return False
 
-    if datetime.datetime.now(datetime.timezone.utc) > datetime.datetime.fromisoformat(expiry):
+    if datetime.datetime.now(datetime.timezone.utc) > datetime.datetime.fromisoformat(
+        expiry
+    ):
         return False
 
     return True
