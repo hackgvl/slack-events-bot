@@ -166,7 +166,7 @@ async def create_cooldown(accessor: str, resource: str, cooldown_minutes: int) -
                 accessor,
                 resource,
                 (
-                    datetime.datetime.now()
+                    datetime.datetime.now(datetime.timezone.utc)
                     + datetime.timedelta(minutes=cooldown_minutes)
                 ).isoformat(),
             ],
