@@ -314,7 +314,7 @@ async def rate_limit_check_api(
 
 
 @API.post("/slack/events")
-async def endpoint(req: Request):
+async def slack_endpoint(req: Request):
     """The front door for all Slack requests"""
     return await APP_HANDLER.handle(req)
 
