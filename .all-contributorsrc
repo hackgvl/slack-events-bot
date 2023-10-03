@@ -44,6 +44,15 @@
         "infra",
         "test"
       ]
+    },
+    {
+      "login": "JakeBobAnderson",
+      "name": "Jake Anderson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/89029029?v=4",
+      "profile": "https://github.com/JakeBobAnderson",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
