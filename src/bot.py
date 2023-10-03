@@ -35,118 +35,6 @@ APP = AsyncApp(
 APP_HANDLER = AsyncSlackRequestHandler(APP)
 
 
-async def periodically_check_api():
-    """Periodically check the api every hour
-
-    This function runs in a thread, meaning that it needs to create it's own
-    database connection. This is OK however, since it only runs once an hour
-    """
-    print("Checking api every hour")
-    while True:
-        try:
-            await check_api()
-        except Exception:  # pylint: disable=broad-except
-            print(traceback.format_exc())
-            os._exit(1)
-        await asyncio.sleep(60 * 60)  # 60 minutes x 60 seconds
-
-
-@APP.command("/add_channel")
-async def add_channel(ack, say, logger, command):
-    """Handle adding a slack channel to the bot"""
-    del say
-    logger.info(f"{command['command']} from {command['channel_id']}")
-    if command["channel_id"] is not None:
-        try:
-            await database.add_channel(command["channel_id"])
-            await ack("Added channel to slack events bot 👍")
-        except sqlite3.IntegrityError:
-            await ack("slack events bot has already been activated for this channel")
-
-
-@APP.command("/remove_channel")
-async def remove_channel(ack, say, logger, command):
-    """Handle removing a slack channel from the bot"""
-    del say
-    logger.info(f"{command['command']} from {command['channel_id']}")
-    if command["channel_id"] is not None:
-        try:
-            await database.remove_channel(command["channel_id"])
-            await ack("Removed channel from slack events bot 👍")
-        except sqlite3.IntegrityError:
-            await ack("slack events bot is not activated for this channel")
-
-
-@APP.command("/check_api")
-async def trigger_check_api(ack, say, logger, command):
-    """Handle manually rechecking the api for updates"""
-    del say
-    logger.info(f"{command['command']} from {command['channel_id']}")
-    if command["channel_id"] is not None:
-        await ack("Checking api for events 👍")
-        await check_api()
-
-
-async def check_api():
-    """Check the api for updates and update any existing messages"""
-    async with aiohttp.ClientSession() as session:
-        async with session.get("https://events.openupstate.org/api/gtc") as resp:
-            # get timezone aware today
-            today = datetime.date.today()
-            today = datetime.datetime(
-                today.year, today.month, today.day, tzinfo=pytz.utc
-            )
-
-            # keep current week's post up to date
-            await parse_events_for_week(today, resp)
-
-            # potentially post next week 5 days early
-            probe_date = today + datetime.timedelta(days=5)
-            await parse_events_for_week(probe_date, resp)
-
-
-async def parse_events_for_week(probe_date, resp):
-    """Parses events for the week containing the probe date"""
-    week_start = probe_date - datetime.timedelta(days=(probe_date.weekday() % 7) + 1)
-    week_end = week_start + datetime.timedelta(days=7)
-
-    blocks = [
-        {
-            "type": "header",
-            "text": {
-                "type": "plain_text",
-                "text": (
-                    "HackGreenville Events for the week of "
-                    f"{week_start.strftime('%B %-d')}"
-                ),
-            },
-        },
-        {"type": "divider"},
-    ]
-
-    text = (
-        f"HackGreenville Events for the week of {week_start.strftime('%B %-d')}"
-        "\n\n===\n\n"
-    )
-
-    for event_data in await resp.json():
-        event = Event.from_event_json(event_data)
-
-        # ignore event if it's not in the current week
-        if event.time < week_start or event.time > week_end:
-            continue
-
-        # ignore event if it has a non-supported status
-        if event.status not in ["cancelled", "upcoming", "past"]:
-            print(f"Couldn't parse event {event.uuid} " f"with status: {event.status}")
-            continue
-
-        blocks += event.generate_blocks() + [{"type": "divider"}]
-        text += f"{event.generate_text()}\n\n"
-
-    await post_or_update_messages(week_start, blocks, text)
-
-
 async def post_or_update_messages(week, blocks, text):
     """Posts or updates a message in a slack channel for a week"""
     channels = await database.get_slack_channel_ids()
@@ -200,6 +88,118 @@ async def post_or_update_messages(week, blocks, text):
             await database.create_message(
                 week, text, slack_response["ts"], slack_channel_id
             )
+
+
+async def parse_events_for_week(probe_date, resp):
+    """Parses events for the week containing the probe date"""
+    week_start = probe_date - datetime.timedelta(days=(probe_date.weekday() % 7) + 1)
+    week_end = week_start + datetime.timedelta(days=7)
+
+    blocks = [
+        {
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": (
+                    "HackGreenville Events for the week of "
+                    f"{week_start.strftime('%B %-d')}"
+                ),
+            },
+        },
+        {"type": "divider"},
+    ]
+
+    text = (
+        f"HackGreenville Events for the week of {week_start.strftime('%B %-d')}"
+        "\n\n===\n\n"
+    )
+
+    for event_data in await resp.json():
+        event = Event.from_event_json(event_data)
+
+        # ignore event if it's not in the current week
+        if event.time < week_start or event.time > week_end:
+            continue
+
+        # ignore event if it has a non-supported status
+        if event.status not in ["cancelled", "upcoming", "past"]:
+            print(f"Couldn't parse event {event.uuid} " f"with status: {event.status}")
+            continue
+
+        blocks += event.generate_blocks() + [{"type": "divider"}]
+        text += f"{event.generate_text()}\n\n"
+
+    await post_or_update_messages(week_start, blocks, text)
+
+
+async def check_api():
+    """Check the api for updates and update any existing messages"""
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://events.openupstate.org/api/gtc") as resp:
+            # get timezone aware today
+            today = datetime.date.today()
+            today = datetime.datetime(
+                today.year, today.month, today.day, tzinfo=pytz.utc
+            )
+
+            # keep current week's post up to date
+            await parse_events_for_week(today, resp)
+
+            # potentially post next week 5 days early
+            probe_date = today + datetime.timedelta(days=5)
+            await parse_events_for_week(probe_date, resp)
+
+
+async def periodically_check_api():
+    """Periodically check the api every hour
+
+    This function runs in a thread, meaning that it needs to create it's own
+    database connection. This is OK however, since it only runs once an hour
+    """
+    print("Checking api every hour")
+    while True:
+        try:
+            await check_api()
+        except Exception:  # pylint: disable=broad-except
+            print(traceback.format_exc())
+            os._exit(1)
+        await asyncio.sleep(60 * 60)  # 60 minutes x 60 seconds
+
+
+@APP.command("/add_channel")
+async def add_channel(ack, say, logger, command):
+    """Handle adding a slack channel to the bot"""
+    del say
+    logger.info(f"{command['command']} from {command['channel_id']}")
+    if command["channel_id"] is not None:
+        try:
+            await database.add_channel(command["channel_id"])
+            await ack("Added channel to slack events bot 👍")
+        except sqlite3.IntegrityError:
+            await ack("slack events bot has already been activated for this channel")
+
+
+@APP.command("/remove_channel")
+async def remove_channel(ack, say, logger, command):
+    """Handle removing a slack channel from the bot"""
+    del say
+    logger.info(f"{command['command']} from {command['channel_id']}")
+    if command["channel_id"] is not None:
+        try:
+            await database.remove_channel(command["channel_id"])
+            await ack("Removed channel from slack events bot 👍")
+        except sqlite3.IntegrityError:
+            await ack("slack events bot is not activated for this channel")
+
+
+@APP.command("/check_api")
+async def trigger_check_api(ack, say, logger, command):
+    """Handle manually rechecking the api for updates"""
+    del say
+    logger.info(f"{command['command']} from {command['channel_id']}")
+    if command["channel_id"] is not None:
+        await ack("Checking api for events 👍")
+        await check_api()
 
 
 API = FastAPI()
