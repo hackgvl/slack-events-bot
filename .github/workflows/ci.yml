@@ -29,6 +29,9 @@ jobs:
       - name: isort
         run: python -m isort --check src/
 
+      - name: ssort
+        run: python -m ssort --check src/
+
       - name: Pylint
         run: python -m pylint src/
 
