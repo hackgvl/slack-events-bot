@@ -141,10 +141,9 @@ good idea!
   sure that imports are in a standard order (black doesn't do this).
 - [ssort](https://github.com/bwhmather/ssort) via `ssort src/` to better group
   code.
-- `pipreqs --force` to save a new version of `requirements.txt`. This is only
-  necessary if you're adding or removing a new dependency. If you're updating
-  the requirements, make sure to add it to the list of dependencies in
-  `pyproject.toml` as well!
+- `pip freeze` to figure out which versions of dependencies to use in
+  `pyproject.toml`. This is only necessary if you're adding or removing a new
+  dependency to the project.
 
 ## License
 
