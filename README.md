@@ -1,6 +1,6 @@
 # slack-events-bot
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 A Slack bot that relays information from HackGreenville Labs' _Events API_ to
@@ -162,6 +162,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://olivia.sculley.dev"><img src="https://avatars.githubusercontent.com/u/88074048?v=4?s=100" width="100px;" alt="Olivia Sculley"/><br /><sub><b>Olivia Sculley</b></sub></a><br /><a href="#ideas-oliviasculley" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/hackgvl/slack-events-bot/commits?author=oliviasculley" title="Code">💻</a> <a href="https://github.com/hackgvl/slack-events-bot/issues?q=author%3Aoliviasculley" title="Bug reports">🐛</a> <a href="#question-oliviasculley" title="Answering Questions">💬</a> <a href="https://github.com/hackgvl/slack-events-bot/commits?author=oliviasculley" title="Documentation">📖</a> <a href="#maintenance-oliviasculley" title="Maintenance">🚧</a> <a href="#infra-oliviasculley" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/allella"><img src="https://avatars.githubusercontent.com/u/1777776?v=4?s=100" width="100px;" alt="Jim Ciallella"/><br /><sub><b>Jim Ciallella</b></sub></a><br /><a href="#infra-allella" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#maintenance-allella" title="Maintenance">🚧</a> <a href="#projectManagement-allella" title="Project Management">📆</a> <a href="https://github.com/hackgvl/slack-events-bot/commits?author=allella" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ThorntonMatthewD"><img src="https://avatars.githubusercontent.com/u/44626690?v=4?s=100" width="100px;" alt="Matthew Thornton"/><br /><sub><b>Matthew Thornton</b></sub></a><br /><a href="https://github.com/hackgvl/slack-events-bot/commits?author=ThorntonMatthewD" title="Code">💻</a> <a href="#infra-ThorntonMatthewD" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/hackgvl/slack-events-bot/commits?author=ThorntonMatthewD" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/JakeBobAnderson"><img src="https://avatars.githubusercontent.com/u/89029029?v=4?s=100" width="100px;" alt="Jake Anderson"/><br /><sub><b>Jake Anderson</b></sub></a><br /><a href="https://github.com/hackgvl/slack-events-bot/commits?author=JakeBobAnderson" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
