@@ -26,6 +26,9 @@ jobs:
       - name: Black
         run: python -m black --check src/
 
+      - name: isort
+        run: python -m isort --check src/
+
       - name: Pylint
         run: python -m pylint src/
 
