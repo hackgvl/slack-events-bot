@@ -7,6 +7,67 @@ import pytz
 from dateutil import parser
 
 
+def parse_location(event_json):
+    """Parse location string from event json"""
+    if event_json["venue"] is None:
+        return None
+
+    if None not in (
+        event_json["venue"]["name"],
+        event_json["venue"]["address"],
+        event_json["venue"]["city"],
+        event_json["venue"]["state"],
+        event_json["venue"]["zip"],
+    ):
+        return (
+            f"{event_json['venue']['name']} at "
+            f"{event_json['venue']['address']} {event_json['venue']['city']}, "
+            f"{event_json['venue']['state']} {event_json['venue']['zip']}"
+        )
+
+    if event_json["venue"]["lat"] is not None and event_json["venue"]["lat"]:
+        return f"lat/long: {event_json['venue']['lat']}, {event_json['venue']['lat']}"
+
+    return f"{event_json['venue']['name']}"
+
+
+def truncate_string(string, length=250):
+    """Truncate string and add ellipses if it's too long"""
+    return string[:length] + (string[length:] and "...")
+
+
+def get_location_url(location):
+    """Return google maps link for location or plaintext"""
+    if location is None:
+        return "No location"
+
+    return (
+        "<https://www.google.com/maps/search/?api=1&query="
+        f"{urllib.parse.quote(location)}|{location}>"
+    )
+
+
+def print_status(status):
+    """Prints status with emojis :D"""
+    if status == "upcoming":
+        return "Upcoming ✅"
+
+    if status == "past":
+        return "Past ✔"
+
+    if status == "cancelled":
+        return "Cancelled ❌"
+
+    return status.title()
+
+
+def print_datetime(time):
+    """Print datetime in local timezone as string"""
+    return time.astimezone(pytz.timezone(os.environ.get("TZ"))).strftime(
+        "%B %-d, %Y %I:%M %p %Z"
+    )
+
+
 class Event:
     """Event records all the data from an event, and has methods to generate the
     message from an event
@@ -79,64 +140,3 @@ class Event:
             f"Location: {self.location}\n"
             f"Time: {print_datetime(self.time)}"
         )
-
-
-def parse_location(event_json):
-    """Parse location string from event json"""
-    if event_json["venue"] is None:
-        return None
-
-    if None not in (
-        event_json["venue"]["name"],
-        event_json["venue"]["address"],
-        event_json["venue"]["city"],
-        event_json["venue"]["state"],
-        event_json["venue"]["zip"],
-    ):
-        return (
-            f"{event_json['venue']['name']} at "
-            f"{event_json['venue']['address']} {event_json['venue']['city']}, "
-            f"{event_json['venue']['state']} {event_json['venue']['zip']}"
-        )
-
-    if event_json["venue"]["lat"] is not None and event_json["venue"]["lat"]:
-        return f"lat/long: {event_json['venue']['lat']}, {event_json['venue']['lat']}"
-
-    return f"{event_json['venue']['name']}"
-
-
-def truncate_string(string, length=250):
-    """Truncate string and add ellipses if it's too long"""
-    return string[:length] + (string[length:] and "...")
-
-
-def get_location_url(location):
-    """Return google maps link for location or plaintext"""
-    if location is None:
-        return "No location"
-
-    return (
-        "<https://www.google.com/maps/search/?api=1&query="
-        f"{urllib.parse.quote(location)}|{location}>"
-    )
-
-
-def print_status(status):
-    """Prints status with emojis :D"""
-    if status == "upcoming":
-        return "Upcoming ✅"
-
-    if status == "past":
-        return "Past ✔"
-
-    if status == "cancelled":
-        return "Cancelled ❌"
-
-    return status.title()
-
-
-def print_datetime(time):
-    """Print datetime in local timezone as string"""
-    return time.astimezone(pytz.timezone(os.environ.get("TZ"))).strftime(
-        "%B %-d, %Y %I:%M %p %Z"
-    )
