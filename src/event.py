@@ -7,6 +7,11 @@ import pytz
 from dateutil import parser
 
 
+# import regular expression module
+import re
+
+
+
 class Event:
     """Event records all the data from an event, and has methods to generate the
     message from an event
@@ -14,6 +19,8 @@ class Event:
 
     # pylint: disable=too-many-instance-attributes
     # Events have lots of data that we need to save together
+    
+
 
     def __init__(
         self, title, group_name, description, location, time, url, status, uuid
@@ -21,12 +28,17 @@ class Event:
         # pylint: disable=too-many-arguments
         self.title = title
         self.group_name = group_name
-        self.description = description
+        self.description = self.remove_html(description)
         self.location = location
         self.time = time
         self.url = url
         self.status = status
         self.uuid = uuid
+
+    def remove_html(self, string):
+        regex = re.compile(r'<[^>]+>')
+        return regex.sub('', string)
+
 
     # creates a struct of event information used to compose different formats of the event message
     @classmethod
