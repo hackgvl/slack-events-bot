@@ -79,7 +79,8 @@ The following needs to be included in an appropriate Apache .conf file, usually 
 1. Create a virtual environment with `python -m venv env`.
 1. Activate the venv with `source env/bin/activate`
     1. Use `deactivate` to exit the venv if needed.
-1. Install dependencies using `pip install -r requirements.txt`
+1. Install project dependencies using `pip install .` or `pip install .[test]`
+   to install development dependencies for testing
 1. Run the app with `python src/bot.py`!
 
 1. Proxy a web server to the running app's port, as defined in the .envrc `PORT` value.
