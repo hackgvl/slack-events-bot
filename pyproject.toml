@@ -33,7 +33,8 @@ test = [
     "isort==5.12.0",
     "pylint==2.17.5",
     "pytest==7.4.2",
-    "pytest-asyncio==0.21.1"
+    "pytest-asyncio==0.21.1",
+    "ssort==0.11.6"
 ]
 
 [project.urls]
