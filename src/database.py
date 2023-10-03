@@ -1,8 +1,8 @@
 """Contains all the functions that interact with the sqlite database"""
-import os
 import datetime
+import os
 import sqlite3
-from typing import Union, Generator
+from typing import Generator, Union
 
 DB_PATH = os.path.abspath(os.environ.get("DB_PATH", "./slack-events-bot.db"))
 

@@ -1,8 +1,5 @@
 """The hackgreenville labs slack bot"""
 
-from collections.abc import Awaitable, Callable
-from typing import Union
-
 import asyncio
 import datetime
 import logging
@@ -12,14 +9,16 @@ import sqlite3
 import sys
 import threading
 import traceback
+from collections.abc import Awaitable, Callable
+from typing import Union
+
 import aiohttp
 import pytz
 import uvicorn
-
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import PlainTextResponse
-from slack_bolt.async_app import AsyncApp
 from slack_bolt.adapter.fastapi.async_handler import AsyncSlackRequestHandler
+from slack_bolt.async_app import AsyncApp
 from starlette.types import Message
 
 import database
