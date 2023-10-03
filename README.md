@@ -138,6 +138,8 @@ good idea!
   the source code in the `src/` folder. We want this to stay at 10/10!
 - [isort](https://pycqa.github.io/isort/index.html) via `isort src/` to make
   sure that imports are in a standard order (black doesn't do this).
+- [ssort](https://github.com/bwhmather/ssort) via `ssort src/` to better group
+  code.
 - `pipreqs --force` to save a new version of `requirements.txt`. This is only
   necessary if you're adding or removing a new dependency. If you're updating
   the requirements, make sure to add it to the list of dependencies in
