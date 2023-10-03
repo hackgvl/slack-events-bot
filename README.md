@@ -44,7 +44,7 @@ local development, and as a result it is set to not run by default. If you would
 specify the `autohealing` profile whenever executing `docker-compose up`:
 
 ```bash
-docker-compose --profile auothealing up
+docker-compose --profile autohealing up
 ```
 
 ### Apache Example
