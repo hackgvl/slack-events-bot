@@ -3,19 +3,18 @@
 
   Visit the /docs route for more information on the routes contained within.
 """
-from collections.abc import Awaitable, Callable
-from typing import Union
-
 import asyncio
+import datetime
+import logging
 import os
 import re
 import sys
 import threading
-import datetime
-import logging
-import uvicorn
+from collections.abc import Awaitable, Callable
+from typing import Union
 
-from fastapi import FastAPI, Request, HTTPException
+import uvicorn
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 from starlette.types import Message
 
