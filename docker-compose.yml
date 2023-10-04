@@ -29,17 +29,38 @@ services:
   # to be automatically restarted if it were to be marked as unhealthy.
   #
   # The autoheal service is not run by default. In order to spin it up please use:
-  #   docker-compose --profile auothealing up
+  #   docker-compose --profile autohealing up
   #
   ##
   autoheal:
     image: willfarrell/autoheal:latest
-    profiles: ["auothealing"]
+    container_name: autoheal
+    profiles: ["autohealing"]
     tty: true
     restart: always
     environment:
       - AUTOHEAL_INTERVAL=60
       - AUTOHEAL_START_PERIOD=120
       - AUTOHEAL_DEFAULT_STOP_TIMEOUT=10
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  ##
+  #
+  # This service is only necessary to run if you'd like for the slack-events-bot container
+  # to be automatically updated with the latest image
+  #
+  # The watchtower service is not run by default. In order to spin it up please use:
+  #   docker-compose --profile autoupdating up
+  #
+  # To run both the autohealing and autoupdating service please use:
+  #   docker-compose --profile autohealing --profile autoupdating up
+  #
+  ##
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    profiles: ["autoupdating"]
+    restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
