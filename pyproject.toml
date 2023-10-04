@@ -50,3 +50,6 @@ pythonpath = [
 norecursedirs = [
   "tests/helpers"
 ]
+
+[tool.isort]
+profile = "black"
