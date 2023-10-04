@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 
-from bot import API
+from server import API
 import database
 
 

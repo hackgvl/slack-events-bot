@@ -1,5 +1,5 @@
 """
-    Tests for the bot.py file.
+    Tests for the server.py file.
 """
 import threading
 import pytest
