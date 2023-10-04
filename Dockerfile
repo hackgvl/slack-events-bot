@@ -7,4 +7,4 @@ RUN pip install --no-cache-dir .
 
 COPY src/ src/
 
-CMD [ "python", "-u", "./src/bot.py" ]
+CMD [ "python", "-u", "./src/server.py" ]
