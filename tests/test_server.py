@@ -2,9 +2,10 @@
     Tests for the server.py file.
 """
 import threading
-import pytest
 
 import helpers
+import pytest
+
 import database
 
 

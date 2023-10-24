@@ -11,6 +11,9 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
+      - name: Install tzdata
+        run: sudo apt-get install -y tzdata
+
       - name: Checkout project
         uses: actions/checkout@v4
 

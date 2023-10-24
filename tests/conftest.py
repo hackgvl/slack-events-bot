@@ -1,14 +1,14 @@
 """Pytest Fixtures"""
-from threading import Thread
-
 import json
 import pathlib
+from threading import Thread
+
 import pytest
 from fastapi.testclient import TestClient
-
-from server import API
 from mocks import mock_response
+
 import database
+from server import API
 
 
 @pytest.fixture
