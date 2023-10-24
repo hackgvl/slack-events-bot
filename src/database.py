@@ -136,6 +136,35 @@ async def get_messages(week) -> list:
     return []
 
 
+async def get_most_recent_message_for_channel(slack_channel_id) -> dict:
+    """Get the most recently posted message for a subscribed Slack channel"""
+    for conn in get_connection():
+        cur = conn.cursor()
+        cur.execute(
+            """SELECT m.week, m.message, m.message_timestamp
+                    FROM messages m
+                    JOIN channels c ON m.channel_id = c.id
+                    WHERE c.slack_channel_id = ?
+                    ORDER BY
+                        m.week DESC,
+                        m.message_timestamp DESC
+                    LIMIT 1
+                """,
+            [slack_channel_id],
+        )
+
+        most_recent_message = cur.fetchone()
+
+        if most_recent_message:
+            return {
+                "week": most_recent_message[0],
+                "message": most_recent_message[1],
+                "message_timestamp": most_recent_message[2],
+            }
+
+    return {}
+
+
 async def get_slack_channel_ids() -> list:
     """Get all slack channels that the bot is configured for"""
     for conn in get_connection():

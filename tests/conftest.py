@@ -3,10 +3,12 @@ import json
 import pathlib
 from threading import Thread
 
+import mocks
 import pytest
+import pytest_asyncio
 from fastapi.testclient import TestClient
-from mocks import mock_response
 
+import bot
 import database
 from server import API
 
@@ -23,8 +25,8 @@ def threads_appear_dead(monkeypatch):
     monkeypatch.setattr(Thread, "is_alive", lambda x: False)
 
 
-@pytest.fixture
-def db_cleanup():
+@pytest_asyncio.fixture
+async def db_cleanup():
     """
     Fixture to clean the database after tests.
     """
@@ -56,7 +58,7 @@ def event_api_response_data():
     data_file = pathlib.Path("tests/data/events_api_response.json")
 
     with open(data_file, "r", encoding="utf-8") as open_file:
-        return mock_response.MockResponse(json=json.loads(open_file.read()))
+        return mocks.mock_response.MockResponse(json=json.loads(open_file.read()))
 
 
 @pytest.fixture
@@ -91,3 +93,11 @@ def single_event_data():
         "service_id": "lkzghtygcnbwb",
         "service": "meetup",
     }
+
+
+@pytest.fixture
+def mock_slack_bolt_async_app(monkeypatch):
+    """
+    Monkeypatch slack_bolt.async_app's AsyncApp with our stub
+    """
+    monkeypatch.setattr(bot, "APP", mocks.AsyncApp())

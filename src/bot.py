@@ -14,6 +14,7 @@ from slack_bolt.adapter.fastapi.async_handler import AsyncSlackRequestHandler
 from slack_bolt.async_app import AsyncApp
 
 import database
+from error import UnsafeMessageSpilloverError
 from message_builder import build_event_blocks, chunk_messages
 
 # configure app
@@ -23,21 +24,53 @@ APP = AsyncApp(
 APP_HANDLER = AsyncSlackRequestHandler(APP)
 
 
+async def is_unsafe_to_spillover(
+    existing_messages_length: int,
+    new_messages_length: int,
+    week: datetime.datetime,
+    slack_channel_id: str,
+) -> bool:
+    """
+    Determines if it is safe to update the messages that list out events for a week for a given
+    Slack channel.
+
+    If enough new events have been added since an initial post has gone out to warrant additional
+    messages needing to be posted due to us reaching character limits then we need to first check
+    if the next week's messages have already been posted. If the next week's messages have already
+    been posted then we cannot add messages to the current week (as things stand).
+    """
+    if new_messages_length > existing_messages_length > 0:
+        latest_message_for_channel = await database.get_most_recent_message_for_channel(
+            slack_channel_id
+        )
+        latest_message_week = datetime.datetime.strptime(
+            latest_message_for_channel["week"], "%Y-%m-%d %H:%M:%S%z"
+        )
+
+        # If the latest message is for a more recent week then it is unsafe
+        # to add new messages. We cannot place new messages before older, existing
+        # ones. Instead we'll log an error and skip updating messages for
+        # this Slack channel.
+        return latest_message_week.date() > week.date()
+
+    return False
+
+
+async def post_new_message(slack_channel_id: str, msg_blocks: list, msg_text: str):
+    """Posts a message to Slack"""
+    return await APP.client.chat_postMessage(
+        channel=slack_channel_id,
+        blocks=msg_blocks,
+        text=msg_text,
+        unfurl_links=False,
+        unfurl_media=False,
+    )
+
+
 async def post_or_update_messages(week, messages):
     """Posts or updates a message in a slack channel for a week"""
     channels = await database.get_slack_channel_ids()
     existing_messages = await database.get_messages(week)
-
-    if len(existing_messages) > 0 and len(messages) > len(existing_messages):
-        logging.error(
-            "Updating messages would cause us to hit the Slack rate limit. "
-            "This is because new events have been added. "
-            "Existing message count: %s --- New message count: %s.",
-            len(existing_messages),
-            len(messages),
-        )
-
-        return
 
     # used to lookup the message id and message for a particular
     # channel
@@ -47,7 +80,6 @@ async def post_or_update_messages(week, messages):
             {
                 "timestamp": existing_message["message_timestamp"],
                 "message": existing_message["message"],
-                "sequence_position": existing_message["sequence_position"] or "1",
             }
         )
 
@@ -56,54 +88,90 @@ async def post_or_update_messages(week, messages):
     posted_channels_set = set(message_details.keys())
 
     for slack_channel_id in channels:
-        for msg_idx, msg in enumerate(messages):
-            msg_text = msg["text"]
-            msg_blocks = msg["blocks"]
+        try:
+            for msg_idx, msg in enumerate(messages):
+                msg_text = msg["text"]
+                msg_blocks = msg["blocks"]
 
-            if (
-                slack_channel_id in posted_channels_set
-                and msg_text == message_details[slack_channel_id][msg_idx]["message"]
-            ):
-                print(
-                    f"Message {msg_idx + 1} for week of "
-                    f"{week.strftime('%B %-d')} in {slack_channel_id} "
-                    "hasn't changed, not updating"
-                )
-            elif slack_channel_id in posted_channels_set:
-                print(
-                    f"Updating message {msg_idx + 1} for week {week.strftime('%B %-d')} "
-                    f"in {slack_channel_id}"
-                )
+                # If new events now warrant additional messages being posted.
+                if msg_idx > len(existing_messages) - 1:
+                    if await is_unsafe_to_spillover(
+                        len(existing_messages), len(messages), week, slack_channel_id
+                    ):
+                        raise UnsafeMessageSpilloverError
 
-                timestamp = message_details[slack_channel_id][msg_idx]["timestamp"]
-                slack_response = await APP.client.chat_update(
-                    ts=timestamp,
-                    channel=slack_channel_id,
-                    blocks=msg_blocks,
-                    text=msg_text,
-                )
+                    print(
+                        f"Posting an additional message for week {week.strftime('%B %-d')} "
+                        f"in {slack_channel_id}"
+                    )
 
-                await database.update_message(
-                    week, msg_text, timestamp, slack_channel_id
-                )
+                    slack_response = await post_new_message(
+                        slack_channel_id, msg_blocks, msg_text
+                    )
 
-            else:
-                print(
-                    f"Posting message {msg_idx + 1} for week {week.strftime('%B %-d')} "
-                    f"in {slack_channel_id}"
-                )
+                    await database.create_message(
+                        week, msg_text, slack_response["ts"], slack_channel_id, msg_idx
+                    )
+                elif (
+                    slack_channel_id in posted_channels_set
+                    and msg_text
+                    == message_details[slack_channel_id][msg_idx]["message"]
+                ):
+                    print(
+                        f"Message {msg_idx + 1} for week of "
+                        f"{week.strftime('%B %-d')} in {slack_channel_id} "
+                        "hasn't changed, not updating"
+                    )
+                elif slack_channel_id in posted_channels_set:
+                    if await is_unsafe_to_spillover(
+                        len(existing_messages), len(messages), week, slack_channel_id
+                    ):
+                        raise UnsafeMessageSpilloverError
 
-                slack_response = await APP.client.chat_postMessage(
-                    channel=slack_channel_id,
-                    blocks=msg_blocks,
-                    text=msg_text,
-                    unfurl_links=False,
-                    unfurl_media=False,
-                )
+                    print(
+                        f"Updating message {msg_idx + 1} for week {week.strftime('%B %-d')} "
+                        f"in {slack_channel_id}"
+                    )
 
-                await database.create_message(
-                    week, msg_text, slack_response["ts"], slack_channel_id, msg_idx
-                )
+                    timestamp = message_details[slack_channel_id][msg_idx]["timestamp"]
+                    slack_response = await APP.client.chat_update(
+                        ts=timestamp,
+                        channel=slack_channel_id,
+                        blocks=msg_blocks,
+                        text=msg_text,
+                    )
+
+                    await database.update_message(
+                        week, msg_text, timestamp, slack_channel_id
+                    )
+
+                else:
+                    print(
+                        f"Posting message {msg_idx + 1} for week {week.strftime('%B %-d')} "
+                        f"in {slack_channel_id}"
+                    )
+
+                    slack_response = await post_new_message(
+                        slack_channel_id, msg_blocks, msg_text
+                    )
+
+                    await database.create_message(
+                        week, msg_text, slack_response["ts"], slack_channel_id, msg_idx
+                    )
+        except UnsafeMessageSpilloverError:
+            # Log error and skip this Slack channel
+            logging.error(
+                "Cannot update messages for %s for channel %s. "
+                "New events have caused the number of messages needed to increase, "
+                "but the next week's post has already been sent. Cannot resize. "
+                "Existing message count: %s --- New message count: %s.",
+                week.strftime("%m/%d/%Y"),
+                slack_channel_id,
+                len(existing_messages),
+                len(messages),
+            )
+
+            continue
 
 
 async def parse_events_for_week(probe_date, resp):
