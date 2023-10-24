@@ -43,6 +43,7 @@ def create_tables():
                 week DATE NOT NULL,
                 message_timestamp TEXT NOT NULL,
                 message TEXT NOT NULL,
+                sequence_position INTEGER NOT NULL,
                 channel_id INTEGER NOT NULL,
                     CONSTRAINT fk_channel_id
                     FOREIGN KEY(channel_id) REFERENCES channels(id)
@@ -71,7 +72,9 @@ def create_tables():
         )
 
 
-async def create_message(week, message, message_timestamp, slack_channel_id):
+async def create_message(
+    week, message, message_timestamp, slack_channel_id, sequence_position: int
+):
     """Create a record of a message sent in slack for a week"""
     for conn in get_connection(commit=True):
         cur = conn.cursor()
@@ -82,9 +85,11 @@ async def create_message(week, message, message_timestamp, slack_channel_id):
         channel_id = cur.fetchone()[0]
 
         cur.execute(
-            """INSERT INTO messages (week, message, message_timestamp, channel_id)
-                VALUES (?, ?, ?, ?)""",
-            [week, message, message_timestamp, channel_id],
+            """INSERT INTO messages (
+                    week, message, message_timestamp, channel_id, sequence_position
+                )
+                VALUES (?, ?, ?, ?, ?)""",
+            [week, message, message_timestamp, channel_id, sequence_position],
         )
 
 
@@ -106,29 +111,39 @@ async def update_message(week, message, message_timestamp, slack_channel_id):
         )
 
 
-async def get_messages(week):
+async def get_messages(week) -> list:
     """Get all messages sent in slack for a week"""
     for conn in get_connection():
         cur = conn.cursor()
         cur.execute(
-            """SELECT m.message, m.message_timestamp, c.slack_channel_id
+            """SELECT m.message, m.message_timestamp, c.slack_channel_id, m.sequence_position
                 FROM messages m
                 JOIN channels c ON m.channel_id = c.id
-                WHERE m.week = ?""",
+                WHERE m.week = ?
+                ORDER BY m.sequence_position ASC""",
             [week],
         )
         return [
-            {"message": x[0], "message_timestamp": x[1], "slack_channel_id": x[2]}
+            {
+                "message": x[0],
+                "message_timestamp": x[1],
+                "slack_channel_id": x[2],
+                "sequence_position": x[3],
+            }
             for x in cur.fetchall()
         ]
 
+    return []
 
-async def get_slack_channel_ids():
+
+async def get_slack_channel_ids() -> list:
     """Get all slack channels that the bot is configured for"""
     for conn in get_connection():
         cur = conn.cursor()
         cur.execute("SELECT slack_channel_id FROM channels")
         return [x[0] for x in cur.fetchall()]
+
+    return []
 
 
 async def add_channel(slack_channel_id):

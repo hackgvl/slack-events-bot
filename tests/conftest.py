@@ -1,11 +1,13 @@
 """Pytest Fixtures"""
 from threading import Thread
 
+import json
+import pathlib
 import pytest
 from fastapi.testclient import TestClient
 
-
 from server import API
+from mocks import mock_response
 import database
 
 
@@ -44,3 +46,48 @@ def db_cleanup():
         conn.commit()
 
         conn.close()
+
+
+@pytest.fixture(scope="session")
+def event_api_response_data():
+    """
+    Provides the contents of events_api_response.json as a fixture.
+    """
+    data_file = pathlib.Path("tests/data/events_api_response.json")
+
+    with open(data_file, "r", encoding="utf-8") as open_file:
+        return mock_response.MockResponse(json=json.loads(open_file.read()))
+
+
+@pytest.fixture
+def single_event_data():
+    """
+    A single sample event to be manipulated within tests.
+    """
+    return {
+        "event_name": "Beer and Napkins Creator Community ",
+        "group_name": "Beer and Napkins Communities of Design",
+        "group_url": "https://beerandnapkins.com",
+        "venue": {
+            "name": "Carolina Bauernhaus Greenville",
+            "address": "556 Perry Ave Suite B118",
+            "city": "Greenville",
+            "state": "SC",
+            "zip": "29611",
+            "country": "us",
+            "lat": 34.848915100097656,
+            "lon": -82.42721557617188,
+        },
+        "url": "https://www.meetup.com/beer-and-napkins-community-of-design/events/lkzghtygcnbwb/",
+        "time": "2023-10-24T22:30:00Z",
+        "tags": "1",
+        "rsvp_count": 1,
+        "created_at": "2023-09-27T14:53:17Z",
+        "description": "A much shorter description",
+        "uuid": "fd15ac18-cb8d-4b8f-937e-f2f9b9a04b66",
+        "nid": "164",
+        "data_as_of": "2023-10-24T01:40:12Z",
+        "status": "upcoming",
+        "service_id": "lkzghtygcnbwb",
+        "service": "meetup",
+    }

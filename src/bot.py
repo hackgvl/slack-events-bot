@@ -2,9 +2,11 @@
 
 import asyncio
 import datetime
+import logging
 import os
 import sqlite3
 import traceback
+from collections import defaultdict
 
 import aiohttp
 import pytz
@@ -12,7 +14,7 @@ from slack_bolt.adapter.fastapi.async_handler import AsyncSlackRequestHandler
 from slack_bolt.async_app import AsyncApp
 
 import database
-from event import Event
+from message_builder import build_event_blocks, chunk_messages
 
 # configure app
 APP = AsyncApp(
@@ -21,59 +23,87 @@ APP = AsyncApp(
 APP_HANDLER = AsyncSlackRequestHandler(APP)
 
 
-async def post_or_update_messages(week, blocks, text):
+async def post_or_update_messages(week, messages):
     """Posts or updates a message in a slack channel for a week"""
     channels = await database.get_slack_channel_ids()
-    messages = await database.get_messages(week)
+    existing_messages = await database.get_messages(week)
+
+    if len(existing_messages) > 0 and len(messages) > len(existing_messages):
+        logging.error(
+            "Updating messages would cause us to hit the Slack rate limit. "
+            "This is because new events have been added. "
+            "Existing message count: %s --- New message count: %s.",
+            len(existing_messages),
+            len(messages),
+        )
+
+        return
 
     # used to lookup the message id and message for a particular
     # channel
-    message_details = {
-        message["slack_channel_id"]: {
-            "timestamp": message["message_timestamp"],
-            "message": message["message"],
-        }
-        for message in messages
-    }
+    message_details = defaultdict(list)
+    for existing_message in existing_messages:
+        message_details[existing_message["slack_channel_id"]].append(
+            {
+                "timestamp": existing_message["message_timestamp"],
+                "message": existing_message["message"],
+                "sequence_position": existing_message["sequence_position"] or "1",
+            }
+        )
 
     # used to quickly lookup if a message has been posted for a
     # particular channel
-    posted_channels_set = set(message["slack_channel_id"] for message in messages)
+    posted_channels_set = set(message_details.keys())
 
     for slack_channel_id in channels:
-        if (
-            slack_channel_id in posted_channels_set
-            and text == message_details[slack_channel_id]["message"]
-        ):
-            print(
-                f"Week of {week.strftime('%B %-d')} in {slack_channel_id} "
-                "hasn't changed, not updating"
-            )
+        for msg_idx, msg in enumerate(messages):
+            msg_text = msg["text"]
+            msg_blocks = msg["blocks"]
 
-        elif slack_channel_id in posted_channels_set:
-            print(f"updating week {week.strftime('%B %-d')} " f"in {slack_channel_id}")
+            if (
+                slack_channel_id in posted_channels_set
+                and msg_text == message_details[slack_channel_id][msg_idx]["message"]
+            ):
+                print(
+                    f"Message {msg_idx + 1} for week of "
+                    f"{week.strftime('%B %-d')} in {slack_channel_id} "
+                    "hasn't changed, not updating"
+                )
+            elif slack_channel_id in posted_channels_set:
+                print(
+                    f"Updating message {msg_idx + 1} for week {week.strftime('%B %-d')} "
+                    f"in {slack_channel_id}"
+                )
 
-            timestamp = message_details[slack_channel_id]["timestamp"]
-            slack_response = await APP.client.chat_update(
-                ts=timestamp, channel=slack_channel_id, blocks=blocks, text=text
-            )
+                timestamp = message_details[slack_channel_id][msg_idx]["timestamp"]
+                slack_response = await APP.client.chat_update(
+                    ts=timestamp,
+                    channel=slack_channel_id,
+                    blocks=msg_blocks,
+                    text=msg_text,
+                )
 
-            await database.update_message(week, text, timestamp, slack_channel_id)
+                await database.update_message(
+                    week, msg_text, timestamp, slack_channel_id
+                )
 
-        else:
-            print(f"posting week {week.strftime('%B %-d')} " f"in {slack_channel_id}")
+            else:
+                print(
+                    f"Posting message {msg_idx + 1} for week {week.strftime('%B %-d')} "
+                    f"in {slack_channel_id}"
+                )
 
-            slack_response = await APP.client.chat_postMessage(
-                channel=slack_channel_id,
-                blocks=blocks,
-                text=text,
-                unfurl_links=False,
-                unfurl_media=False,
-            )
+                slack_response = await APP.client.chat_postMessage(
+                    channel=slack_channel_id,
+                    blocks=msg_blocks,
+                    text=msg_text,
+                    unfurl_links=False,
+                    unfurl_media=False,
+                )
 
-            await database.create_message(
-                week, text, slack_response["ts"], slack_channel_id
-            )
+                await database.create_message(
+                    week, msg_text, slack_response["ts"], slack_channel_id, msg_idx
+                )
 
 
 async def parse_events_for_week(probe_date, resp):
@@ -81,41 +111,11 @@ async def parse_events_for_week(probe_date, resp):
     week_start = probe_date - datetime.timedelta(days=(probe_date.weekday() % 7) + 1)
     week_end = week_start + datetime.timedelta(days=7)
 
-    blocks = [
-        {
-            "type": "header",
-            "text": {
-                "type": "plain_text",
-                "text": (
-                    "HackGreenville Events for the week of "
-                    f"{week_start.strftime('%B %-d')}"
-                ),
-            },
-        },
-        {"type": "divider"},
-    ]
+    event_blocks = await build_event_blocks(resp, week_start, week_end)
 
-    text = (
-        f"HackGreenville Events for the week of {week_start.strftime('%B %-d')}"
-        "\n\n===\n\n"
-    )
+    chunked_messages = await chunk_messages(event_blocks, week_start)
 
-    for event_data in await resp.json():
-        event = Event.from_event_json(event_data)
-
-        # ignore event if it's not in the current week
-        if event.time < week_start or event.time > week_end:
-            continue
-
-        # ignore event if it has a non-supported status
-        if event.status not in ["cancelled", "upcoming", "past"]:
-            print(f"Couldn't parse event {event.uuid} " f"with status: {event.status}")
-            continue
-
-        blocks += event.generate_blocks() + [{"type": "divider"}]
-        text += f"{event.generate_text()}\n\n"
-
-    await post_or_update_messages(week_start, blocks, text)
+    await post_or_update_messages(week_start, chunked_messages)
 
 
 async def check_api():
