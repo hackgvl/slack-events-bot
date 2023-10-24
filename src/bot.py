@@ -94,7 +94,7 @@ async def post_or_update_messages(week, messages):
                 msg_blocks = msg["blocks"]
 
                 # If new events now warrant additional messages being posted.
-                if msg_idx > len(existing_messages) - 1:
+                if msg_idx > len(message_details[slack_channel_id]) - 1:
                     if await is_unsafe_to_spillover(
                         len(existing_messages), len(messages), week, slack_channel_id
                     ):
