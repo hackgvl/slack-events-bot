@@ -5,7 +5,6 @@ from threading import Thread
 
 import mocks
 import pytest
-import pytest_asyncio
 from fastapi.testclient import TestClient
 
 import bot
@@ -25,8 +24,8 @@ def threads_appear_dead(monkeypatch):
     monkeypatch.setattr(Thread, "is_alive", lambda x: False)
 
 
-@pytest_asyncio.fixture
-async def db_cleanup():
+@pytest.fixture
+def db_cleanup():
     """
     Fixture to clean the database after tests.
     """
