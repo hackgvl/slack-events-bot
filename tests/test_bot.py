@@ -3,11 +3,12 @@ Tests the core Slack integration functionality of the application.
 """
 
 import datetime
+
 import pytest
 import pytz
 
-from bot import post_or_update_messages
 import database
+from bot import post_or_update_messages
 
 TEST_SLACK_CHANNEL_ID = "fake_slack_id"
 

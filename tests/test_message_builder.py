@@ -3,15 +3,16 @@ Tests for the message_builder.py utility file.
 """
 
 import datetime
+
 import pytest
 import pytz
 
 from message_builder import (
-    build_event_blocks,
-    build_single_event_block,
-    build_header,
-    chunk_messages,
     MAX_MESSAGE_CHARACTER_LENGTH,
+    build_event_blocks,
+    build_header,
+    build_single_event_block,
+    chunk_messages,
 )
 
 week_start = datetime.datetime.strptime("10/22/2023", "%m/%d/%Y").replace(
