@@ -10,14 +10,13 @@ import pytz
 import database
 from bot import post_or_update_messages
 
-TEST_SLACK_CHANNEL_ID = "fake_slack_id"
 
 week = datetime.datetime.strptime("10/22/2023", "%m/%d/%Y").replace(tzinfo=pytz.utc)
 
 
 @pytest.mark.asyncio
 async def test_post_or_update_messages_expansion_with_next_week_already_posted(
-    caplog, db_cleanup
+    caplog, db_cleanup, mock_slack_bolt_async_app
 ):
     """
     post_or_update_messages fails if it determines that a
@@ -25,15 +24,17 @@ async def test_post_or_update_messages_expansion_with_next_week_already_posted(
     has already had posts sent for it.
     """
 
+    slack_id = "fake_slack_id"
+
     # Create a "channel" and a message
-    await database.add_channel(TEST_SLACK_CHANNEL_ID)
+    await database.add_channel(slack_id)
 
     # This message is for the next week
     await database.create_message(
         "2023-10-29 00:00:00+00:00",
         "test",
         "1698119853.135399",
-        TEST_SLACK_CHANNEL_ID,
+        slack_id,
         1,
     )
     # Message for this week
@@ -41,7 +42,7 @@ async def test_post_or_update_messages_expansion_with_next_week_already_posted(
         "2023-10-22 00:00:00+00:00",
         "test",
         "1698119853.135399",
-        TEST_SLACK_CHANNEL_ID,
+        slack_id,
         1,
     )
 
@@ -67,14 +68,16 @@ async def test_post_or_update_messages_expansion_without_new_weeks_posts(
     as long as the next week hasn't had any posts sent for it yet.
     """
 
+    slack_id = "fake_slack_id_two"
+
     # Create a "channel" and a message
-    await database.add_channel(TEST_SLACK_CHANNEL_ID)
+    await database.add_channel(slack_id)
     # Message for this week
     await database.create_message(
         "2023-10-22 00:00:00+00:00",
         "test",
         "1698119853.135399",
-        TEST_SLACK_CHANNEL_ID,
+        slack_id,
         1,
     )
 
@@ -84,7 +87,7 @@ async def test_post_or_update_messages_expansion_without_new_weeks_posts(
     )
 
     assert (
-        "Cannot update messages for 10/22/2023 for channel fake_slack_id. "
+        "Cannot update messages for 10/22/2023 for channel fake_slack_id_two. "
         "New events have caused the number of messages needed to increase, "
         "but the next week's post has already been sent. Cannot resize. "
         "Existing message count: 1 --- New message count: 2." not in caplog.text
