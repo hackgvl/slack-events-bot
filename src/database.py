@@ -43,7 +43,7 @@ def create_tables():
                 week DATE NOT NULL,
                 message_timestamp TEXT NOT NULL,
                 message TEXT NOT NULL,
-                sequence_position INTEGER NOT NULL,
+                sequence_position INTEGER DEFAULT 0 NOT NULL,
                 channel_id INTEGER NOT NULL,
                     CONSTRAINT fk_channel_id
                     FOREIGN KEY(channel_id) REFERENCES channels(id)
