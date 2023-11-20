@@ -14,14 +14,13 @@ from collections.abc import Awaitable, Callable
 from typing import Union
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import HTTPException, Request
 from fastapi.responses import PlainTextResponse
 from starlette.types import Message
 
 import database
-from bot import APP_HANDLER, periodically_check_api, periodically_delete_old_messages
-
-API = FastAPI()
+from bot import periodically_check_api, periodically_delete_old_messages
+from config import API, SLACK_APP_HANDLER
 
 
 async def identify_slack_team_domain(payload: bytes) -> Union[str, None]:
@@ -136,7 +135,7 @@ async def rate_limit_check_api(
 @API.post("/slack/events")
 async def slack_endpoint(req: Request):
     """The front door for all Slack requests"""
-    return await APP_HANDLER.handle(req)
+    return await SLACK_APP_HANDLER.handle(req)
 
 
 @API.get("/healthz", tags=["Utility"])

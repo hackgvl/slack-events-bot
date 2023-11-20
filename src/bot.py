@@ -10,18 +10,12 @@ from collections import defaultdict
 
 import aiohttp
 import pytz
-from slack_bolt.adapter.fastapi.async_handler import AsyncSlackRequestHandler
-from slack_bolt.async_app import AsyncApp
 
 import database
+from auth import admin_required
+from config import SLACK_APP
 from error import UnsafeMessageSpilloverError
 from message_builder import build_event_blocks, chunk_messages
-
-# configure app
-APP = AsyncApp(
-    token=os.environ.get("BOT_TOKEN"), signing_secret=os.environ.get("SIGNING_SECRET")
-)
-APP_HANDLER = AsyncSlackRequestHandler(APP)
 
 
 async def is_unsafe_to_spillover(
@@ -58,7 +52,7 @@ async def is_unsafe_to_spillover(
 
 async def post_new_message(slack_channel_id: str, msg_blocks: list, msg_text: str):
     """Posts a message to Slack"""
-    return await APP.client.chat_postMessage(
+    return await SLACK_APP.client.chat_postMessage(
         channel=slack_channel_id,
         blocks=msg_blocks,
         text=msg_text,
@@ -134,7 +128,7 @@ async def post_or_update_messages(week, messages):
                     )
 
                     timestamp = message_details[slack_channel_id][msg_idx]["timestamp"]
-                    slack_response = await APP.client.chat_update(
+                    slack_response = await SLACK_APP.client.chat_update(
                         ts=timestamp,
                         channel=slack_channel_id,
                         blocks=msg_blocks,
@@ -235,7 +229,8 @@ async def periodically_check_api():
         await asyncio.sleep(60 * 60)  # 60 minutes x 60 seconds
 
 
-@APP.command("/add_channel")
+@SLACK_APP.command("/add_channel")
+@admin_required
 async def add_channel(ack, say, logger, command):
     """Handle adding a slack channel to the bot"""
     del say
@@ -245,10 +240,11 @@ async def add_channel(ack, say, logger, command):
             await database.add_channel(command["channel_id"])
             await ack("Added channel to slack events bot 👍")
         except sqlite3.IntegrityError:
-            await ack("slack events bot has already been activated for this channel")
+            await ack("Slack events bot has already been activated for this channel")
 
 
-@APP.command("/remove_channel")
+@SLACK_APP.command("/remove_channel")
+@admin_required
 async def remove_channel(ack, say, logger, command):
     """Handle removing a slack channel from the bot"""
     del say
@@ -258,10 +254,10 @@ async def remove_channel(ack, say, logger, command):
             await database.remove_channel(command["channel_id"])
             await ack("Removed channel from slack events bot 👍")
         except sqlite3.IntegrityError:
-            await ack("slack events bot is not activated for this channel")
+            await ack("Slack events bot is not activated for this channel")
 
 
-@APP.command("/check_api")
+@SLACK_APP.command("/check_api")
 async def trigger_check_api(ack, say, logger, command):
     """Handle manually rechecking the api for updates"""
     del say

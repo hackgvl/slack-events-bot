@@ -8,14 +8,15 @@ import pytest
 from fastapi.testclient import TestClient
 
 import bot
+import config
+import server
 import database
-from server import API
 
 
 @pytest.fixture
 def test_client():
     """Returns a Starlette test API instance"""
-    return TestClient(API)
+    return TestClient(server.API)
 
 
 @pytest.fixture
@@ -95,8 +96,8 @@ def single_event_data():
 
 
 @pytest.fixture
-def mock_slack_bolt_async_app(monkeypatch):
+def mock_slack_bolt_async_app(request, monkeypatch):
     """
     Monkeypatch slack_bolt.async_app's AsyncApp with our stub
     """
-    monkeypatch.setattr(bot, "APP", mocks.AsyncApp())
+    monkeypatch.setattr(f"{request.param}.SLACK_APP", mocks.AsyncApp())
