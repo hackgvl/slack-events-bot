@@ -184,7 +184,7 @@ async def check_api():
     """Check the api for updates and update any existing messages"""
     async with aiohttp.ClientSession() as session:
         async with session.get(
-            "https://stage.hackgreenville.com/api/v0/events"
+            os.environ.get("EVENTS_API_URL") or "https://events.openupstate.org/api/gtc"
         ) as resp:
             # get timezone aware today
             today = datetime.date.today()
