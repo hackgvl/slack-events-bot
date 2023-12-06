@@ -183,7 +183,7 @@ async def parse_events_for_week(probe_date, resp):
 async def check_api():
     """Check the api for updates and update any existing messages"""
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://events.openupstate.org/api/gtc") as resp:
+        async with session.get("https://hackgreenville.com/api/v0/events") as resp:
             # get timezone aware today
             today = datetime.date.today()
             today = datetime.datetime(
