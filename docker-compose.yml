@@ -12,6 +12,7 @@ services:
       - SIGNING_SECRET=signing_secret_here
       - PORT=3000
       - TZ=US/Eastern
+      - EVENTS_API_URL=https://stage.hackgreenville.com/api/v0/events
     volumes:
       - ./slack-events-bot.db:/usr/src/app/slack-events-bot.db
     ports:
