@@ -109,7 +109,7 @@ def sample_event_date():
     return {
         "event_name": "Tankin' Around Greenville",
         "group_name": "Greenville Tank Enthusiasts",
-        "group_url": "https://www.techafterfive.com/greenville/",
+        "group_url": "https://www.tankinaroundgreenville.com",
         "venue": {
             "name": "Gower Estates Park",
             "address": "24 Evelyn Ave,",
