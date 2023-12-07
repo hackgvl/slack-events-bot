@@ -101,3 +101,36 @@ def mock_slack_bolt_async_app(request, monkeypatch):
     Monkeypatch slack_bolt.async_app's AsyncApp with our stub
     """
     monkeypatch.setattr(f"{request.param}.SLACK_APP", mocks.AsyncApp())
+
+
+@pytest.fixture
+def sample_event_date():
+    """Return fully-populated event dictionary"""
+    return {
+        "event_name": "Tankin' Around Greenville",
+        "group_name": "Greenville Tank Enthusiasts",
+        "group_url": "https://www.techafterfive.com/greenville/",
+        "venue": {
+            "name": "Gower Estates Park",
+            "address": "24 Evelyn Ave,",
+            "city": "Greenville",
+            "state": "SC",
+            "zip": "29607",
+            "country": "US",
+            "lat": "34.8300191",
+            "lon": "-82.3510954",
+        },
+        "url": "https://www.eventbrite.com/e/tanks-are-cool-123456789101",
+        "time": "2023-12-12T22:30:00Z",
+        "tags": "",
+        "rsvp_count": None,
+        "created_at": "2023-11-15T18:50:35Z",
+        "description": "Join us for a special event as we take a group trip to local parks to admire "
+        + "and appreciate the decommissioned military tanks that are on display.",
+        "uuid": "e70fb83b-df54-4333-9f02-1746ec1d62ee",
+        "nid": "1",
+        "data_as_of": "2023-12-07T16:40:14Z",
+        "status": "upcoming",
+        "service_id": "123456789101",
+        "service": "eventbrite",
+    }.copy()
