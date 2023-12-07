@@ -26,7 +26,7 @@ def parse_location(event_json):
         )
 
     if event_json["venue"]["lat"] is not None and event_json["venue"]["lat"]:
-        return f"lat/long: {event_json['venue']['lat']}, {event_json['venue']['lat']}"
+        return f"lat/long: {event_json['venue']['lat']}, {event_json['venue']['lon']}"
 
     return f"{event_json['venue']['name']}"
 
