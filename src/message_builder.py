@@ -13,7 +13,7 @@ from event import Event
 MAX_MESSAGE_CHARACTER_LENGTH = 3000
 # Approximate character length needed to accommodate post headers
 # ex: HackGreenville Events for the week of September 10 - 10 of 10
-HEADER_BUFFER_LENGTH = 66
+HEADER_BUFFER_LENGTH = 61
 
 
 async def build_header(week_start: datetime.datetime, index: int, total: int) -> dict:
