@@ -33,6 +33,7 @@ oauth_config:
       - chat:write
       - chat:write.public
       - incoming-webhook
+      - users:read
 settings:
   org_deploy_enabled: false
   socket_mode_enabled: false
