@@ -13,6 +13,7 @@ from message_builder import (
     build_header,
     build_single_event_block,
     chunk_messages,
+    total_messages_needed,
 )
 
 week_start = datetime.datetime.strptime("10/22/2023", "%m/%d/%Y").replace(
@@ -95,3 +96,52 @@ async def test_chunk_messages(event_api_response_data):
         len(text) < MAX_MESSAGE_CHARACTER_LENGTH
         for text in [msg["text"] for msg in result]
     )
+
+
+@pytest.mark.asyncio
+async def test_total_messages_needed_with_borderline_edge_case():
+    """
+    Ensures total message count is rounded upwards appropriately
+    whenever the event data character count is just below n * MAX_MESSAGE_CHARACTER_LENGTH
+    and the addition of post headers causes it message count to then spillover.
+
+    The test data used is that reported in https://github.com/hackgvl/slack-events-bot/issues/52
+    """
+    # Abbreviated problem case from actual data that originally caused the bug to manifest.
+    borderline_test_case = [
+        {
+            "text_length": 463,
+        },
+        {
+            "text_length": 311,
+        },
+        {
+            "text_length": 397,
+        },
+        {
+            "text_length": 507,
+        },
+        {
+            "text_length": 456,
+        },
+        {
+            "text_length": 463,
+        },
+        {
+            "text_length": 352,
+        },
+    ]
+
+    assert await total_messages_needed(borderline_test_case) == 2
+
+
+@pytest.mark.asyncio
+async def test_total_messages_needed_always_at_least_1():
+    """
+    Ensures that the total message needed count is always at least one.
+
+    This is because we create a post for weeks that have zero events in case
+    new ones are added later, and we don't want the posts to have "- 1 of 0" in their
+    headers.
+    """
+    assert await total_messages_needed([]) == 1
