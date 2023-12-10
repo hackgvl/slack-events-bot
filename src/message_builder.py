@@ -11,6 +11,9 @@ from event import Event
 
 # This is lower than the actual limit to provide headroom
 MAX_MESSAGE_CHARACTER_LENGTH = 3000
+# Approximate character length needed to accommodate post headers
+# ex: HackGreenville Events for the week of September 10 - 10 of 10
+HEADER_BUFFER_LENGTH = 66
 
 
 async def build_header(week_start: datetime.datetime, index: int, total: int) -> dict:
@@ -84,18 +87,33 @@ async def build_event_blocks(resp, week_start, week_end) -> list:
     )
 
 
+async def total_messages_needed(event_blocks: list) -> int:
+    """
+    Determines the total number of posts that will be needed to cover a week's events.
+
+    Will always be at least 1.
+    """
+    messages_needed = math.ceil(
+        sum(event["text_length"] for event in event_blocks)
+        / (MAX_MESSAGE_CHARACTER_LENGTH - HEADER_BUFFER_LENGTH)
+    )
+
+    # Ensure total count is at least 1 if we're going to post anything
+    if messages_needed == 0:
+        return 1
+
+    return messages_needed
+
+
 async def chunk_messages(event_blocks, week_start) -> list:
     """
     Chunk up events across messages so that no one message is longer than 4k characters
     """
-    total_messages_needed = math.ceil(
-        sum(event["text_length"] for event in event_blocks)
-        / MAX_MESSAGE_CHARACTER_LENGTH
-    )
+    messages_needed = await total_messages_needed(event_blocks)
 
     messages = []
 
-    initial_header = await build_header(week_start, 1, total_messages_needed)
+    initial_header = await build_header(week_start, 1, messages_needed)
 
     blocks = initial_header["blocks"]
     text = initial_header["text"]
@@ -110,9 +128,7 @@ async def chunk_messages(event_blocks, week_start) -> list:
         # Save message and then start a new one
         messages += [{"blocks": blocks, "text": text}]
 
-        new_header = await build_header(
-            week_start, len(messages) + 1, total_messages_needed
-        )
+        new_header = await build_header(week_start, len(messages) + 1, messages_needed)
 
         blocks = new_header["blocks"]
         text = new_header["text"]
