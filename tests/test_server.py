@@ -1,7 +1,11 @@
 """
     Tests for the server.py file.
 """
+import hashlib
+import hmac
+import os
 import threading
+import time
 
 import helpers
 import pytest
@@ -48,6 +52,10 @@ def test_check_api_whenever_someone_executes_it_for_first_time(
         content=helpers.create_slack_request_payload(
             command="/check_api", team_domain=TEAM_DOMAIN
         ),
+        headers={
+            "X-Slack-Request-Timestamp": str(int(time.time())),
+            "X-Slack-Signature": "placeholder",
+        },
     )
 
     # Until the Slack Bolt client is properly mocked this is about as specific as we
@@ -75,6 +83,10 @@ async def test_check_api_whenever_someone_executes_it_after_expiry(
         content=helpers.create_slack_request_payload(
             command="/check_api", team_domain=TEAM_DOMAIN
         ),
+        headers={
+            "X-Slack-Request-Timestamp": str(int(time.time())),
+            "X-Slack-Signature": "placeholder",
+        },
     )
 
     # See:
@@ -100,3 +112,96 @@ async def test_check_api_whenever_someone_executes_it_before_expiry(
     )
     assert response.status_code == 200
     assert response.content.decode("utf-8") == RATE_LIMIT_COPY
+
+
+def test_possible_replay_attack_mitigation(test_client, caplog):
+    """
+    If the timestamp provided in the headers is beyond 5 minutes of the
+    current time then the replay mitigation should be triggered.
+    """
+    test_client.post(
+        "/slack/events",
+        content=helpers.create_slack_request_payload(
+            command="/add_channel", team_domain=TEAM_DOMAIN
+        ),
+        # Jan 1st, 2000 (way out of the 5 minute threshold)
+        headers={"X-Slack-Request-Timestamp": "946702800"},
+    )
+
+    assert "Possible replay attack has been logged." in caplog.text
+
+
+def test_replay_attack_mitigation_skipped(test_client, caplog):
+    """
+    If the timestamp provided in the headers is within 5 minutes of the
+    current time then the replay mitigation should not be triggered.
+    """
+    test_client.post(
+        "/slack/events",
+        content=helpers.create_slack_request_payload(
+            command="/add_channel", team_domain=TEAM_DOMAIN
+        ),
+        headers={
+            "X-Slack-Request-Timestamp": str(int(time.time())),
+            "X-Slack-Signature": "placeholder",
+        },
+    )
+
+    assert "Possible replay attack has been logged." not in caplog.text
+
+
+def test_valid_slack_signature_allows_request_to_be_processed(test_client, caplog):
+    """
+    Whenever the expected Slack signature matches what was provided
+    in the request headers then the bot will proceed with normal
+    operations and execute the desired command.
+    """
+    test_signing_secret = "super_secret"
+    os.environ["SIGNING_SECRET"] = test_signing_secret
+    timestamp = str(int(time.time()))
+    body = helpers.create_slack_request_payload(
+        command="/add_channel", team_domain=TEAM_DOMAIN
+    )
+    test_hash = hmac.new(
+        test_signing_secret.encode("UTF-8"),
+        f"v0:{timestamp}:".encode() + body,
+        hashlib.sha256,
+    )
+    test_signature = f"v0={test_hash.hexdigest()}"
+
+    test_client.post(
+        "/slack/events",
+        content=body,
+        headers={
+            "X-Slack-Request-Timestamp": timestamp,
+            "X-Slack-Signature": test_signature,
+        },
+    )
+
+    assert (
+        "A request to invoke a Slack command failed the signature check."
+        not in caplog.text
+    )
+
+
+def test_invalid_slack_signature_raises_error(test_client, caplog):
+    """
+    Whenever the expected Slack signature does NOT match what was provided
+    in the request headers then the bot will raise an exception.
+    """
+    os.environ["SIGNING_SECRET"] = "super_secret"
+
+    test_client.post(
+        "/slack/events",
+        content=helpers.create_slack_request_payload(
+            command="/add_channel", team_domain=TEAM_DOMAIN
+        ),
+        headers={
+            "X-Slack-Request-Timestamp": str(int(time.time())),
+            "X-Slack-Signature": "not_correct",
+        },
+    )
+
+    assert (
+        "A request to invoke a Slack command failed the signature check." in caplog.text
+    )
