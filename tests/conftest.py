@@ -9,8 +9,8 @@ from fastapi.testclient import TestClient
 
 import bot
 import config
-import server
 import database
+import server
 
 
 @pytest.fixture

@@ -1,6 +1,7 @@
 """
 Tests functions contained in src/auth.py
 """
+import os
 
 import pytest
 
@@ -24,3 +25,14 @@ class TestAuth:
         result = await auth.is_admin("admin_user")
 
         assert result is True
+
+    @pytest.mark.asyncio
+    async def test_generation_of_expected_hash(self, mock_slack_bolt_async_app):
+        os.environ["SIGNING_SECRET"] = "super_secret"
+
+        result = await auth.generate_expected_hash("946702800", b"I am a test body")
+
+        assert (
+            result.hexdigest()
+            == "a02c228c8010f0725da1a2a2524fb0f1dced42c5d56ed1ea11cdb603cf72a434"
+        )

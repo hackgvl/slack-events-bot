@@ -19,6 +19,7 @@ from fastapi.responses import PlainTextResponse
 from starlette.types import Message
 
 import database
+from auth import validate_slack_command_source
 from bot import periodically_check_api, periodically_delete_old_messages
 from config import API, SLACK_APP_HANDLER
 
@@ -133,8 +134,10 @@ async def rate_limit_check_api(
 
 
 @API.post("/slack/events")
+@validate_slack_command_source
 async def slack_endpoint(req: Request):
     """The front door for all Slack requests"""
+
     return await SLACK_APP_HANDLER.handle(req)
 
 
