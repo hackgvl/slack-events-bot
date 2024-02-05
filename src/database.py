@@ -1,4 +1,5 @@
 """Contains all the functions that interact with the sqlite database"""
+
 import datetime
 import os
 import sqlite3

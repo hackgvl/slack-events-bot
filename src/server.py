@@ -3,6 +3,7 @@
 
   Visit the /docs route for more information on the routes contained within.
 """
+
 import asyncio
 import datetime
 import logging
@@ -16,7 +17,6 @@ from typing import Union
 import uvicorn
 from fastapi import HTTPException, Request
 from fastapi.responses import PlainTextResponse
-from starlette.types import Message
 
 import database
 from auth import validate_slack_command_source
@@ -84,39 +84,12 @@ async def update_check_api_cooldown(team_domain: str | None) -> None:
     await database.create_cooldown(team_domain, "check_api", 15)
 
 
-async def set_body(req: Request, body: bytes):
-    """
-    Overrides the Request class's __receive method as a workaround to an issue
-    where accessing a request body in middleware causes it to become blocking.
-
-    See https://github.com/tiangolo/fastapi/discussions/8187 for the discussion
-    and this post (https://github.com/tiangolo/fastapi/discussions/8187#discussioncomment-5148049)
-    for where this code originates. Thanks, https://github.com/liukelin!
-    """
-
-    async def receive() -> Message:
-        return {"type": "http.request", "body": body}
-
-    # pylint: disable=protected-access
-    req._receive = receive
-
-
-async def get_body(req: Request) -> bytes:
-    """
-    Leans into the overriden Request.__receive method seen above in set_body
-    to workaround 'await req.body()' causing the application to hang.
-    """
-    body = await req.body()
-    await set_body(req, body)
-    return body
-
-
 @API.middleware("http")
 async def rate_limit_check_api(
     req: Request, call_next: Callable[[Request], Awaitable[None]]
 ):
     """Looks to see if /check_api has been run recently, and returns an error if so."""
-    req_body = await get_body(req)
+    req_body = await req.body()
 
     if await check_api_being_requested(req.scope["path"], req_body):
         team_domain = await identify_slack_team_domain(req_body)
