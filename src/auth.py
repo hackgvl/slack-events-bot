@@ -2,6 +2,7 @@
 Logic for restricting the use of Slack commands to specific parties
 and validating incoming requests.
 """
+
 import hashlib
 import hmac
 import logging

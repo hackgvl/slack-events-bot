@@ -4,37 +4,27 @@ description = "An automated Slack bot to syndicate local events into Slack chann
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-version="0.1.0"
-authors = [
-  { name = "Olivia Sculley", email = "olivia@sculley.dev" },
-]
-keywords = [
-  "automation",
-  "black",
-  "bolt",
-  "bot",
-  "pylint",
-  "pytest",
-  "slack"
-]
+version = "0.1.0"
+authors = [{ name = "Olivia Sculley", email = "olivia@sculley.dev" }]
+keywords = ["automation", "black", "bolt", "bot", "pylint", "pytest", "slack"]
 dependencies = [
-  "aiohttp==3.9.1",
-  "fastapi==0.103.2",
+  "aiohttp==3.9.3",
+  "fastapi==0.109.2",
   "python_dateutil==2.8.2",
-  "pytz==2023.3",
-  "slack_bolt==1.18.0",
-  "uvicorn==0.23.2"
+  "pytz==2024.1",
+  "slack_bolt==1.18.1",
+  "uvicorn==0.27.0.post1",
 ]
 
 [project.optional-dependencies]
 test = [
-    "black==23.9.1",
-    "httpx==0.25.0",
-    "isort==5.12.0",
-    "pylint==2.17.5",
-    "pytest==7.4.2",
-    "pytest-asyncio==0.21.1",
-    "ssort==0.11.6"
+  "black==24.1.1",
+  "httpx==0.26.0",
+  "isort==5.13.2",
+  "pylint==3.0.3",
+  "pytest==7.4.4",
+  "pytest-asyncio==0.23.4",
+  "ssort==0.11.6",
 ]
 
 [project.urls]
@@ -43,13 +33,8 @@ Documentation = "https://github.com/hackgvl/slack-events-bot/blob/dev/README.md"
 Repository = "https://github.com/hackgvl/slack-events-bot.git"
 
 [tool.pytest.ini_options]
-pythonpath = [
-  ".",
-  "src"
-]
-norecursedirs = [
-  "tests/helpers"
-]
+pythonpath = [".", "src"]
+norecursedirs = ["tests/helpers"]
 
 [tool.isort]
 profile = "black"
