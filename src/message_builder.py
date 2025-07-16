@@ -63,6 +63,9 @@ async def build_single_event_block(
 
     text = f"{event.generate_text()}\n\n"
 
+    if not text.strip():  # Check if the text is empty or only contains whitespace
+        return None
+
     return {
         "blocks": event.generate_blocks() + [{"type": "divider"}],
         "text": text,

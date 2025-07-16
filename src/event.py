@@ -108,11 +108,15 @@ class Event:
 
     def generate_blocks(self):
         """Compose part of a slack message using the blocks layout"""
-        return [
-            {
-                "type": "header",
-                "text": {"type": "plain_text", "text": truncate_string(self.title)},
-            },
+        blocks = []
+        if self.title and self.title.strip():
+            blocks.append(
+                {
+                    "type": "header",
+                    "text": {"type": "plain_text", "text": truncate_string(self.title)},
+                }
+            )
+        blocks.append(
             {
                 "type": "section",
                 "text": {
@@ -129,8 +133,9 @@ class Event:
                     {"type": "mrkdwn", "text": "*Time*"},
                     {"type": "plain_text", "text": print_datetime(self.time)},
                 ],
-            },
-        ]
+            }
+        )
+        return blocks
 
     def generate_text(self):
         """Compose a text string of event information for backup"""

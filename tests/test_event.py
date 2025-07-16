@@ -3,6 +3,8 @@ Tests the parsing of events data
 """
 
 import event
+import datetime
+import pytz
 
 
 def test_parsing_location_of_event_with_full_details(sample_event_date):
@@ -41,3 +43,35 @@ def test_parsing_location_of_event_missing_state_and_latitude(sample_event_date)
     result = event.parse_location(event_data_without_state_and_lat)
 
     assert result == "Gower Estates Park"
+
+def test_generate_blocks_no_title():
+    """Test that no header block is generated when the event has no title."""
+    mock_event = event.Event(
+        title="",
+        group_name="Test Group",
+        description="Test Description",
+        location="Test Location",
+        time=datetime.datetime(2025, 7, 16, 10, 0, 0, tzinfo=pytz.utc),
+        url="http://example.com",
+        status="upcoming",
+        uuid="test-uuid",
+    )
+    blocks = mock_event.generate_blocks()
+    # Assert that the first block is not a header block
+    assert not any(b.get('type') == 'header' for b in blocks)
+
+def test_generate_blocks_whitespace_title():
+    """Test that no header block is generated when the event has only whitespace title."""
+    mock_event = event.Event(
+        title="   ",
+        group_name="Test Group",
+        description="Test Description",
+        location="Test Location",
+        time=datetime.datetime(2025, 7, 16, 10, 0, 0, tzinfo=pytz.utc),
+        url="http://example.com",
+        status="upcoming",
+        uuid="test-uuid",
+    )
+    blocks = mock_event.generate_blocks()
+    # Assert that the first block is not a header block
+    assert not any(b.get('type') == 'header' for b in blocks)
