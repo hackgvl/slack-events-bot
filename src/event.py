@@ -36,13 +36,15 @@ def parse_location(event_json):
 
 def truncate_string(string, length=250):
     """Truncate string and add ellipses if it's too long"""
+    if not string or not string.strip():
+        return None
     return string[:length] + (string[length:] and "...")
 
 
 def get_location_url(location):
     """Return google maps link for location or plaintext"""
-    if location is None:
-        return "No location"
+    if not location or not location.strip():
+        return None
 
     return (
         "<https://www.google.com/maps/search/?api=1&query="
@@ -106,6 +108,31 @@ class Event:
             uuid=event_json["uuid"],
         )
 
+    def _build_fields(self):
+        fields = []
+        if self.group_name and self.group_name.strip():
+            fields.append(
+                {"type": "mrkdwn", "text": f"*{truncate_string(self.group_name)}*"}
+            )
+        if self.url and self.url.strip():
+            fields.append({"type": "mrkdwn", "text": f"<{self.url}|*Link* :link:>"})
+
+        status_text = print_status(self.status)
+        if status_text and status_text.strip():
+            fields.append({"type": "mrkdwn", "text": "*Status*"})
+            fields.append({"type": "mrkdwn", "text": status_text})
+
+        location_text = get_location_url(self.location)
+        if location_text and location_text.strip():
+            fields.append({"type": "mrkdwn", "text": "*Location*"})
+            fields.append({"type": "mrkdwn", "text": location_text})
+
+        time_text = print_datetime(self.time)
+        if time_text and time_text.strip():
+            fields.append({"type": "mrkdwn", "text": "*Time*"})
+            fields.append({"type": "plain_text", "text": time_text})
+        return fields
+
     def generate_blocks(self):
         """Compose part of a slack message using the blocks layout"""
         blocks = []
@@ -116,34 +143,45 @@ class Event:
                     "text": {"type": "plain_text", "text": truncate_string(self.title)},
                 }
             )
-        blocks.append(
-            {
-                "type": "section",
-                "text": {
-                    "type": "plain_text",
-                    "text": truncate_string(self.description),
-                },
-                "fields": [
-                    {"type": "mrkdwn", "text": f"*{truncate_string(self.group_name)}*"},
-                    {"type": "mrkdwn", "text": f"<{self.url}|*Link* :link:>"},
-                    {"type": "mrkdwn", "text": "*Status*"},
-                    {"type": "mrkdwn", "text": print_status(self.status)},
-                    {"type": "mrkdwn", "text": "*Location*"},
-                    {"type": "mrkdwn", "text": get_location_url(self.location)},
-                    {"type": "mrkdwn", "text": "*Time*"},
-                    {"type": "plain_text", "text": print_datetime(self.time)},
-                ],
+        section_block = {
+            "type": "section",
+            "fields": self._build_fields(),
+        }
+
+        description_text = truncate_string(self.description)
+        if description_text:
+            section_block["text"] = {
+                "type": "plain_text",
+                "text": description_text,
             }
-        )
+
+        blocks.append(section_block)
         return blocks
 
     def generate_text(self):
         """Compose a text string of event information for backup"""
-        return (
-            f"{truncate_string(self.title)}\n"
-            f"Description: {truncate_string(self.description)}\n"
-            f"Link: {self.url}\n"
-            f"Status: {print_status(self.status)}\n"
-            f"Location: {self.location}\n"
-            f"Time: {print_datetime(self.time)}"
-        )
+        lines = []
+        title_text = truncate_string(self.title)
+        if title_text:
+            lines.append(title_text)
+
+        description_text = truncate_string(self.description)
+        if description_text:
+            lines.append(f"Description: {description_text}")
+
+        if self.url and self.url.strip():
+            lines.append(f"Link: {self.url}")
+
+        status_text = print_status(self.status)
+        if status_text and status_text.strip():
+            lines.append(f"Status: {status_text}")
+
+        location_text = self.location  # get_location_url already handles None/empty
+        if location_text and location_text.strip():
+            lines.append(f"Location: {location_text}")
+
+        time_text = print_datetime(self.time)
+        if time_text:
+            lines.append(f"Time: {time_text}")
+
+        return "\n".join(lines)
