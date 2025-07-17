@@ -31,7 +31,8 @@
         "infra",
         "maintenance",
         "projectManagement",
-        "doc"
+        "doc",
+        "bug"
       ]
     },
     {
