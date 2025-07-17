@@ -68,6 +68,8 @@ def print_status(status):
 
 def print_datetime(time):
     """Print datetime in local timezone as string"""
+    if time is None:
+        return None
     return time.astimezone(pytz.timezone(os.environ.get("TZ"))).strftime(
         "%B %-d, %Y %I:%M %p %Z"
     )
