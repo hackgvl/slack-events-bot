@@ -19,7 +19,9 @@
         "question",
         "doc",
         "maintenance",
-        "infra"
+        "infra",
+        "review",
+        "test"
       ]
     },
     {
