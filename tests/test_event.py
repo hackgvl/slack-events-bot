@@ -2,9 +2,9 @@
 Tests the parsing of events data
 """
 
-import event
 import datetime
 import pytz
+import event
 
 
 def test_parsing_location_of_event_with_full_details(sample_event_date):
@@ -161,7 +161,8 @@ def test_generate_blocks_no_description():
 
 
 def test_generate_blocks_whitespace_description():
-    """Test that the text field is not present in the section block when description is whitespace."""
+    """Test that the text field is not present in the section block when
+    description is whitespace."""
     mock_event = event.Event(
         title="Test Title",
         group_name="Test Group",

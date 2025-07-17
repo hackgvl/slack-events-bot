@@ -3,7 +3,7 @@
 import urllib.parse
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments, too-many-positional-arguments
 def create_slack_request_payload(
     command: str,
     token: str = "1CnbxdlkN3Ag2AafGvsp81za",

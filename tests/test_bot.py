@@ -19,7 +19,7 @@ class TestBot:
 
     @pytest.mark.asyncio
     async def test_post_or_update_messages_expansion_with_next_week_already_posted(
-        self, caplog, db_cleanup, mock_slack_bolt_async_app
+        self, caplog, _db_cleanup, _mock_slack_bolt_async_app
     ):
         """
         post_or_update_messages fails if it determines that a
@@ -64,7 +64,7 @@ class TestBot:
 
     @pytest.mark.asyncio
     async def test_post_or_update_messages_expansion_without_new_weeks_posts(
-        self, caplog, db_cleanup, mock_slack_bolt_async_app
+        self, caplog, _db_cleanup, _mock_slack_bolt_async_app
     ):
         """
         post_or_update_messages will allow for additional messages to be posted

@@ -11,7 +11,7 @@ class Client:
 
     async def chat_postMessage(
         self, channel, blocks, text, unfurl_links, unfurl_media
-    ):  # pylint: disable=invalid-name
+    ):  # pylint: disable=invalid-name, too-many-arguments, too-many-positional-arguments
         """Simulates posting a new Slack message"""
         del channel, blocks, text, unfurl_links, unfurl_media
 
@@ -30,7 +30,7 @@ class Client:
         }
 
 
-class AsyncApp:
+class AsyncApp:  # pylint: disable=too-few-public-methods
     """Simulates slack_bolt.async_app's AsyncApp"""
 
     def __init__(self) -> None:

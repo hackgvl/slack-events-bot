@@ -1,4 +1,5 @@
 """Pytest Fixtures"""
+
 import json
 import pathlib
 from threading import Thread
@@ -7,8 +8,6 @@ import mocks
 import pytest
 from fastapi.testclient import TestClient
 
-import bot
-import config
 import database
 import server
 
@@ -125,8 +124,10 @@ def sample_event_date():
         "tags": "",
         "rsvp_count": None,
         "created_at": "2023-11-15T18:50:35Z",
-        "description": "Join us for a special event as we take a group trip to local parks to admire "
-        + "and appreciate the decommissioned military tanks that are on display.",
+        "description": (
+            "Join us for a special event as we take a group trip to local parks to admire "
+            "and appreciate the decommissioned military tanks that are on display."
+        ),
         "uuid": "e70fb83b-df54-4333-9f02-1746ec1d62ee",
         "nid": "1",
         "data_as_of": "2023-12-07T16:40:14Z",

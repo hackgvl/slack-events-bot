@@ -1,6 +1,7 @@
 """
     Tests for the server.py file.
 """
+
 import hashlib
 import hmac
 import os

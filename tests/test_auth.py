@@ -1,6 +1,7 @@
 """
 Tests functions contained in src/auth.py
 """
+
 import os
 
 import pytest
@@ -13,21 +14,22 @@ class TestAuth:
     """Groups tests for auth.py into a single scope"""
 
     @pytest.mark.asyncio
-    async def test_is_admin_when_user_is_not_admin(self, mock_slack_bolt_async_app):
+    async def test_is_admin_when_user_is_not_admin(self, _mock_slack_bolt_async_app):
         """Tests when a user is NOT a workspace admin"""
         result = await auth.is_admin("regular_user")
 
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_is_admin_when_user_is_admin(self, mock_slack_bolt_async_app):
+    async def test_is_admin_when_user_is_admin(self, _mock_slack_bolt_async_app):
         """Tests when a user is a workspace admin"""
         result = await auth.is_admin("admin_user")
 
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_generation_of_expected_hash(self, mock_slack_bolt_async_app):
+    async def test_generation_of_expected_hash(self, _mock_slack_bolt_async_app):
+        """Tests the generation of the expected hash for Slack requests."""
         os.environ["SIGNING_SECRET"] = "super_secret"
 
         result = await auth.generate_expected_hash("946702800", b"I am a test body")
