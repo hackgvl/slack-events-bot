@@ -42,7 +42,8 @@
       "contributions": [
         "code",
         "infra",
-        "test"
+        "test",
+        "review"
       ]
     },
     {
