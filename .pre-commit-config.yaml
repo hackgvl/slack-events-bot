@@ -1,0 +1,52 @@
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+  - repo: https://github.com/pylint-dev/pylint
+    rev: v3.2.5
+    hooks:
+      - id: pylint
+        args: ["--fail-under=10"]
+        additional_dependencies: [
+          "aiohttp==3.11.10",
+          "fastapi==0.115.6",
+          "python-dateutil==2.9.0.post0",
+          "pytz==2024.2",
+          "slack_bolt==1.21.3",
+          "slack_sdk==3.34.0",
+          "uvicorn==0.32.1",
+          "black==24.10.0",
+          "httpx==0.28.0",
+          "isort==5.13.2",
+          "pytest==8.3.4",
+          "pytest-asyncio==0.24.0",
+          "ssort==0.14.0",
+          "pre-commit==3.7.1"
+          ]
+  - repo: local
+    hooks:
+      - id: ssort
+        name: ssort
+        entry: python -m ssort
+        language: system
+        types: [python]
+        args: ["--check"]
+      - id: pytest
+        name: pytest
+        entry: bash -c 'source .envrc && pytest'
+        language: system
+        types: [python]
+        pass_filenames: false
