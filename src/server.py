@@ -12,8 +12,7 @@ import os
 import re
 import sys
 import threading
-from collections.abc import Awaitable, Callable
-from typing import Union
+from typing import Awaitable, Callable, Union
 
 import uvicorn
 from fastapi import HTTPException, Request, Response

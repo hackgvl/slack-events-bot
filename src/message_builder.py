@@ -50,7 +50,7 @@ async def build_single_event_block(
     """
     Returns the blocks (content and divider), text, and text length for a single event
     """
-    event = Event.from_event_json(event_data)
+    event = Event(event_data)
 
     # ignore event if it's not in the current week
     if event.time < week_start or event.time > week_end:

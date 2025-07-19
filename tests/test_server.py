@@ -5,8 +5,8 @@
 import hashlib
 import hmac
 import os
-import threading
 import time
+import unittest.mock
 
 import helpers
 import pytest
@@ -22,18 +22,20 @@ def test_health_check_healthy_threads(test_client):
     assert response.content == b'{"detail":"Everything is lookin\' good!"}'
 
 
-def test_health_check_with_a_dead_thread(
-    test_client, threads_appear_dead
-):  # pylint: disable=unused-argument
+def test_health_check_with_a_dead_thread(test_client):
     """Tests what happens if a dead thread is found whenever this endpoint is hit."""
-    response = test_client.get("healthz")
+    with unittest.mock.patch("threading.enumerate") as mock_enumerate:
+        mock_thread = unittest.mock.Mock()
+        mock_thread.is_alive.return_value = False
+        mock_thread.name = "DeadThread"
+        mock_enumerate.return_value = [mock_thread]
 
-    first_thread = threading.enumerate()[0]
+        response = test_client.get("healthz")
 
-    assert response.status_code == 500
-    assert response.json() == {
-        "detail": f"The {first_thread.name} thread has died. This container will soon restart."
-    }
+        assert response.status_code == 500
+        assert response.json() == {
+            "detail": f"The {mock_thread.name} thread has died. This container will soon restart."
+        }
 
 
 TEAM_DOMAIN = "team_awesome"
@@ -44,9 +46,7 @@ RATE_LIMIT_COPY = (
 )
 
 
-def test_check_api_whenever_someone_executes_it_for_first_time(
-    test_client, db_cleanup
-):  # pylint: disable=unused-argument
+def test_check_api_whenever_someone_executes_it_for_first_time(test_client):
     """Whenever an entity executes /check_api for the first time it should run successfully."""
     response = test_client.post(
         "/slack/events",
@@ -69,9 +69,7 @@ def test_check_api_whenever_someone_executes_it_for_first_time(
 
 
 @pytest.mark.asyncio
-async def test_check_api_whenever_someone_executes_it_after_expiry(
-    test_client, db_cleanup  # pylint: disable=unused-argument
-):
+async def test_check_api_whenever_someone_executes_it_after_expiry(test_client):
     """
     Whenever an entity has run /check_api before, and their cooldown window has expired,
     then they should be able to run the command again.
@@ -96,9 +94,7 @@ async def test_check_api_whenever_someone_executes_it_after_expiry(
 
 
 @pytest.mark.asyncio
-async def test_check_api_whenever_someone_executes_it_before_expiry(
-    test_client, db_cleanup  # pylint: disable=unused-argument
-):
+async def test_check_api_whenever_someone_executes_it_before_expiry(test_client):
     """
     Whenever an entity has run /check_api before, and their cooldown window has NOT expired,
     then they should receive a message telling them to try again later.

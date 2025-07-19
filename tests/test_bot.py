@@ -3,23 +3,25 @@ Tests the core Slack integration functionality of the application.
 """
 
 import datetime
+from unittest.mock import AsyncMock
 
 import pytest
 import pytz
 
 import database
 from bot import post_or_update_messages
+from config import SLACK_APP
 
 week = datetime.datetime.strptime("10/22/2023", "%m/%d/%Y").replace(tzinfo=pytz.utc)
 
 
-@pytest.mark.parametrize("mock_slack_bolt_async_app", ["bot"], indirect=True)
 class TestBot:
     """Groups tests for bot.py into a single scope"""
 
     @pytest.mark.asyncio
     async def test_post_or_update_messages_expansion_with_next_week_already_posted(
-        self, caplog, _db_cleanup, _mock_slack_bolt_async_app
+        self,
+        caplog,
     ):
         """
         post_or_update_messages fails if it determines that a
@@ -34,7 +36,7 @@ class TestBot:
 
         # This message is for the next week
         await database.create_message(
-            "2023-10-29 00:00:00+00:00",
+            datetime.datetime.fromisoformat("2023-10-29 00:00:00+00:00"),
             "test",
             "1698119853.135399",
             slack_id,
@@ -42,7 +44,7 @@ class TestBot:
         )
         # Message for this week
         await database.create_message(
-            "2023-10-22 00:00:00+00:00",
+            datetime.datetime.fromisoformat("2023-10-22 00:00:00+00:00"),
             "test",
             "1698119853.135399",
             slack_id,
@@ -50,6 +52,10 @@ class TestBot:
         )
 
         # Try adding more message than what currently exists
+        SLACK_APP.client.chat_update = AsyncMock(return_value={"ok": True})
+        SLACK_APP.client.chat_postMessage = AsyncMock(
+            return_value={"ok": True, "ts": "123.456"}
+        )
         await post_or_update_messages(
             week,
             [{"text": "message 1", "blocks": []}, {"text": "message 2", "blocks": []}],
@@ -64,7 +70,8 @@ class TestBot:
 
     @pytest.mark.asyncio
     async def test_post_or_update_messages_expansion_without_new_weeks_posts(
-        self, caplog, _db_cleanup, _mock_slack_bolt_async_app
+        self,
+        caplog,
     ):
         """
         post_or_update_messages will allow for additional messages to be posted
@@ -77,7 +84,7 @@ class TestBot:
         await database.add_channel(slack_id)
         # Message for this week
         await database.create_message(
-            "2023-10-22 00:00:00+00:00",
+            datetime.datetime.fromisoformat("2023-10-22 00:00:00+00:00"),
             "test",
             "1698119853.135399",
             slack_id,
@@ -85,6 +92,10 @@ class TestBot:
         )
 
         # Try adding more message than what currently exists
+        SLACK_APP.client.chat_update = AsyncMock(return_value={"ok": True})
+        SLACK_APP.client.chat_postMessage = AsyncMock(
+            return_value={"ok": True, "ts": "123.456"}
+        )
         await post_or_update_messages(
             week,
             [{"text": "message 1", "blocks": []}, {"text": "message 2", "blocks": []}],

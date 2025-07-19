@@ -3,32 +3,42 @@
 import datetime
 import os
 import sqlite3
-from typing import Generator, Union
+from typing import Union
 
 DB_PATH = os.path.abspath(os.environ.get("DB_PATH", "./slack-events-bot.db"))
 
 
-def get_connection(commit: bool = False) -> Generator:
+class Connection:
+    """Context manager for SQLite connection."""
+
+    def __init__(self, commit: bool = False):
+        self.commit = commit
+        self.conn = None
+
+    def __enter__(self):
+        self.conn = sqlite3.connect(DB_PATH)
+        return self.conn
+
+    def __exit__(self, exc_type, value, traceback):
+        if self.commit:
+            self.conn.commit()
+        self.conn.close()
+
+
+def get_connection(commit: bool = False) -> Connection:
     """
-    Yields a SQLite connection to another method.
+    Returns a context manager for a SQLite connection.
 
-    Once the other method has finished,
-    the transaction if committed if the commit parameter is true,
-    and then the connection is always closed.
+    Usage:
+        with get_connection(commit=True) as conn:
+            # do something with conn
     """
-    conn = sqlite3.connect(DB_PATH)
-
-    yield conn
-
-    if commit:
-        conn.commit()
-
-    conn.close()
+    return Connection(commit)
 
 
 def create_tables():
     """Create database tables needed for slack events bot"""
-    for conn in get_connection(commit=True):
+    with get_connection(commit=True) as conn:
         cur = conn.cursor()
         cur.executescript(
             """
@@ -77,7 +87,7 @@ async def create_message(
     week, message, message_timestamp, slack_channel_id, sequence_position: int
 ):
     """Create a record of a message sent in slack for a week"""
-    for conn in get_connection(commit=True):
+    with get_connection(commit=True) as conn:
         cur = conn.cursor()
         # get database's channel id for slack channel id
         cur.execute(
@@ -96,7 +106,7 @@ async def create_message(
 
 async def update_message(week, message, message_timestamp, slack_channel_id):
     """Updates a record of a message sent in slack for a week"""
-    for conn in get_connection(commit=True):
+    with get_connection(commit=True) as conn:
         cur = conn.cursor()
         # get database's channel id for slack channel id
         cur.execute(
@@ -114,7 +124,7 @@ async def update_message(week, message, message_timestamp, slack_channel_id):
 
 async def get_messages(week) -> list:
     """Get all messages sent in slack for a week"""
-    for conn in get_connection():
+    with get_connection() as conn:
         cur = conn.cursor()
         cur.execute(
             """SELECT m.message, m.message_timestamp, c.slack_channel_id, m.sequence_position
@@ -139,7 +149,7 @@ async def get_messages(week) -> list:
 
 async def get_most_recent_message_for_channel(slack_channel_id) -> dict:
     """Get the most recently posted message for a subscribed Slack channel"""
-    for conn in get_connection():
+    with get_connection() as conn:
         cur = conn.cursor()
         cur.execute(
             """SELECT m.week, m.message, m.message_timestamp
@@ -168,7 +178,7 @@ async def get_most_recent_message_for_channel(slack_channel_id) -> dict:
 
 async def get_slack_channel_ids() -> list:
     """Get all slack channels that the bot is configured for"""
-    for conn in get_connection():
+    with get_connection() as conn:
         cur = conn.cursor()
         cur.execute("SELECT slack_channel_id FROM channels")
         return [x[0] for x in cur.fetchall()]
@@ -178,7 +188,7 @@ async def get_slack_channel_ids() -> list:
 
 async def add_channel(slack_channel_id):
     """Add a slack channel to post in for the bot"""
-    for conn in get_connection(commit=True):
+    with get_connection(commit=True) as conn:
         cur = conn.cursor()
         cur.execute(
             "INSERT INTO channels (slack_channel_id) VALUES (?)", [slack_channel_id]
@@ -187,14 +197,14 @@ async def add_channel(slack_channel_id):
 
 async def remove_channel(channel_id):
     """Remove a slack channel to post in from the bot"""
-    for conn in get_connection(commit=True):
+    with get_connection(commit=True) as conn:
         cur = conn.cursor()
         cur.execute("DELETE FROM channels WHERE slack_channel_id = ?", [channel_id])
 
 
 async def delete_old_messages(days_back=90):
     """delete all messages and cooldowns with timestamp older than current timestamp - days_back"""
-    for conn in get_connection(commit=True):
+    with get_connection(commit=True) as conn:
         cur = conn.cursor()
         cur.execute(
             "DELETE FROM messages where cast(message_timestamp as decimal) < ?",
@@ -216,12 +226,21 @@ async def delete_old_messages(days_back=90):
         )
 
 
+def clear_db():
+    """Clear all data from the database tables."""
+    with get_connection(commit=True) as conn:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM channels")
+        cur.execute("DELETE FROM messages")
+        cur.execute("DELETE FROM cooldowns")
+
+
 async def create_cooldown(accessor: str, resource: str, cooldown_minutes: int) -> None:
     """
     Upserts a cooldown record for an entity which will let the system know when to make the resource
     available to them once again.
     """
-    for conn in get_connection(commit=True):
+    with get_connection(commit=True) as conn:
         cur = conn.cursor()
         cur.execute(
             """INSERT INTO cooldowns (accessor, resource, expires_at)
@@ -247,7 +266,7 @@ async def get_cooldown_expiry_time(accessor: str, resource: str) -> Union[str, N
     Returns the time at which an accessor is able to access a resource
     or None if no restriction has ever been put in place.
     """
-    for conn in get_connection():
+    with get_connection() as conn:
         cur = conn.cursor()
         cur.execute(
             """SELECT expires_at FROM cooldowns

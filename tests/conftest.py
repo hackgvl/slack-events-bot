@@ -2,7 +2,6 @@
 
 import json
 import pathlib
-from threading import Thread
 
 import mocks
 import pytest
@@ -18,35 +17,10 @@ def test_client():
     return TestClient(server.API)
 
 
-@pytest.fixture
-def threads_appear_dead(monkeypatch):
-    """Include this fixture if you'd like for all your threads to be reported as dead."""
-    monkeypatch.setattr(Thread, "is_alive", lambda x: False)
-
-
-@pytest.fixture
-def db_cleanup():
-    """
-    Fixture to clean the database after tests.
-    """
-    database.create_tables()
-
-    yield
-
-    for conn in database.get_connection():
-        cur = conn.cursor()
-
-        cur.executescript(
-            """
-            SELECT 'DELETE FROM ' || name
-            FROM sqlite_master
-            WHERE type = 'table';
-            """
-        )
-
-        conn.commit()
-
-        conn.close()
+@pytest.fixture(autouse=True)
+def clear_db():
+    """Clear the database after each test that uses it."""
+    database.clear_db()
 
 
 @pytest.fixture(scope="session")
@@ -92,14 +66,6 @@ def single_event_data():
         "service_id": "lkzghtygcnbwb",
         "service": "meetup",
     }
-
-
-@pytest.fixture
-def mock_slack_bolt_async_app(request, monkeypatch):
-    """
-    Monkeypatch slack_bolt.async_app's AsyncApp with our stub
-    """
-    monkeypatch.setattr(f"{request.param}.SLACK_APP", mocks.AsyncApp())
 
 
 @pytest.fixture

@@ -209,8 +209,8 @@ async def periodically_delete_old_messages():
     while True:
         try:
             await database.delete_old_messages()
-        except Exception:  # pylint: disable=broad-except
-            print(traceback.format_exc())
+        except sqlite3.Error:
+            logging.error("An unexpected error occurred: %s", traceback.format_exc())
             os._exit(1)
         await asyncio.sleep(60 * 60 * 24)  # 24 hours
 
@@ -225,8 +225,8 @@ async def periodically_check_api():
     while True:
         try:
             await check_api()
-        except Exception:  # pylint: disable=broad-except
-            print(traceback.format_exc())
+        except sqlite3.Error:
+            logging.error("An unexpected error occurred: %s", traceback.format_exc())
             os._exit(1)
         await asyncio.sleep(60 * 60)  # 60 minutes x 60 seconds
 

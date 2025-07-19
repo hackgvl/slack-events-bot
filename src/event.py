@@ -12,26 +12,27 @@ def parse_location(event_json):
     if event_json["venue"] is None:
         return None
 
-    if None not in (
-        event_json["venue"]["name"],
-        event_json["venue"]["address"],
-        event_json["venue"]["city"],
-        event_json["venue"]["state"],
-        event_json["venue"]["zip"],
-    ):
-        return (
-            f"{event_json['venue']['name']} at "
-            f"{event_json['venue']['address']} {event_json['venue']['city']}, "
-            f"{event_json['venue']['state']} {event_json['venue']['zip']}"
-        )
+    name = event_json["venue"].get("name")
+    address = event_json["venue"].get("address")
+    city = event_json["venue"].get("city")
+    state = event_json["venue"].get("state")
+    zip_code = event_json["venue"].get("zip")
+    lat = event_json["venue"].get("lat")
+    lon = event_json["venue"].get("lon")
 
-    if (
-        event_json["venue"]["lat"] is not None
-        and event_json["venue"]["lon"] is not None
-    ):
-        return f"lat/long: {event_json['venue']['lat']}, {event_json['venue']['lon']}"
+    # Option 1: Full address
+    if all([name, address, city, state, zip_code]):
+        return f"{name} at " f"{address} {city}, " f"{state} {zip_code}"
 
-    return f"{event_json['venue']['name']}"
+    # Option 2: Lat/Lon
+    if lat is not None and lon is not None:
+        return f"lat/long: {lat}, {lon}"
+
+    # Option 3: Just name
+    if name:
+        return name
+
+    return None
 
 
 def truncate_string(string, length=250):
@@ -46,9 +47,13 @@ def get_location_url(location):
     if not location or not location.strip():
         return None
 
+    search_query = location
+    if location.startswith("lat/long: "):
+        search_query = location.replace("lat/long: ", "")
+
     return (
         "<https://www.google.com/maps/search/?api=1&query="
-        f"{urllib.parse.quote(location)}|{location}>"
+        f"{urllib.parse.quote(search_query)}|{location}>"
     )
 
 
@@ -80,35 +85,50 @@ class Event:
     message from an event
     """
 
-    # pylint: disable=too-many-instance-attributes
-    # Events have lots of data that we need to save together
-    def __init__(
-        self, *, title, group_name, description, location, time, url, status, uuid
-    ):
-        # pylint: disable=too-many-arguments
-        self.title = title
-        self.group_name = group_name
-        self.description = description
-        self.location = location
-        self.time = time
-        self.url = url
-        self.status = status
-        self.uuid = uuid
+    def __init__(self, event_json):
+        self._event_json = event_json
 
-    # creates a struct of event information used to compose different formats of the event message
-    @classmethod
-    def from_event_json(cls, event_json):
-        """Create an event class object from the raw event json returned by the OpenApi"""
-        return cls(
-            title=event_json["event_name"],
-            group_name=event_json["group_name"],
-            description=event_json["description"],
-            location=parse_location(event_json),
-            time=parser.isoparse(event_json["time"]),
-            url=event_json["url"],
-            status=event_json["status"],
-            uuid=event_json["uuid"],
-        )
+    @property
+    def title(self):
+        """Returns the event title."""
+        return self._event_json["event_name"]
+
+    @property
+    def group_name(self):
+        """Returns the event group name."""
+        return self._event_json["group_name"]
+
+    @property
+    def description(self):
+        """Returns the event description."""
+        return self._event_json["description"]
+
+    @property
+    def location(self):
+        """Returns the event location."""
+        return parse_location(self._event_json)
+
+    @property
+    def time(self):
+        """Returns the event time."""
+        if self._event_json["time"] is None:
+            return None
+        return parser.isoparse(self._event_json["time"])
+
+    @property
+    def url(self):
+        """Returns the event URL."""
+        return self._event_json["url"]
+
+    @property
+    def status(self):
+        """Returns the event status."""
+        return self._event_json["status"]
+
+    @property
+    def uuid(self):
+        """Returns the event UUID."""
+        return self._event_json["uuid"]
 
     def _build_fields(self):
         fields = []
@@ -124,7 +144,7 @@ class Event:
             fields.append({"type": "mrkdwn", "text": "*Status*"})
             fields.append({"type": "mrkdwn", "text": status_text})
 
-        location_text = get_location_url(self.location)
+        location_text = get_location_url(parse_location(self._event_json))
         if location_text and location_text.strip():
             fields.append({"type": "mrkdwn", "text": "*Location*"})
             fields.append({"type": "mrkdwn", "text": location_text})
@@ -178,7 +198,7 @@ class Event:
         if status_text and status_text.strip():
             lines.append(f"Status: {status_text}")
 
-        location_text = self.location  # get_location_url already handles None/empty
+        location_text = get_location_url(self.location)
         if location_text and location_text.strip():
             lines.append(f"Location: {location_text}")
 
