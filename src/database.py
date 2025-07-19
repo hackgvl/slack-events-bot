@@ -5,7 +5,12 @@ import os
 import sqlite3
 from typing import Union
 
-DB_PATH = os.path.abspath(os.environ.get("DB_PATH", "./slack-events-bot.db"))
+DB_PATH = os.path.abspath(
+    os.environ.get(
+        "DB_PATH",
+        ":memory:" if os.environ.get("TESTING") == "True" else "./slack-events-bot.db",
+    )
+)
 
 
 class Connection:

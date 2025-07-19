@@ -11,6 +11,7 @@ jobs:
       BOT_TOKEN: "fake"
       SIGNING_SECRET: "also_fake"
       TZ: "US/Eastern"
+      TESTING: "True"
 
     runs-on: ubuntu-latest
     steps:

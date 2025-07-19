@@ -18,8 +18,9 @@ def test_client():
 
 
 @pytest.fixture(autouse=True)
-def clear_db():
-    """Clear the database after each test that uses it."""
+def setup_db():
+    """Set up and clear the database before each test."""
+    database.create_tables()
     database.clear_db()
 
 
