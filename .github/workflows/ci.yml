@@ -26,17 +26,19 @@ jobs:
       - name: Install Python dependencies
         run: pip install .[test]
 
-      - name: Black
-        run: python -m black --check src/
+      - name: Lint and Format src/
+        run: |
+          python -m black --check src/
+          python -m isort --check src/
+          python -m ssort --check src/
+          python -m pylint --fail-under=10 src/
 
-      - name: isort
-        run: python -m isort --check src/
-
-      - name: ssort
-        run: python -m ssort --check src/
-
-      - name: Pylint
-        run: python -m pylint src/
+      - name: Lint and Format tests/
+        run: |
+          python -m black --check tests/
+          python -m isort --check tests/
+          python -m ssort --check tests/
+          python -m pylint --fail-under=10 tests/
 
       - name: Pytest
         run: python -m pytest tests/
