@@ -4,7 +4,7 @@
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 ## Deprecation Notice
-As of March 2026, this code has been [ported into the HackGreenville Laravel application as a module]([url](https://github.com/hackgvl/hackgreenville-com/pull/570)) and is not longer used.
+As of March 2026, this code has been [ported into the HackGreenville Laravel application as a module](https://github.com/hackgvl/hackgreenville-com/pull/570) and is no longer used.
 
 A Slack bot that relays information from HackGreenville Labs' _Events API_ to
 Slack channels!
