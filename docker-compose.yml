@@ -3,14 +3,72 @@ version: "3"
 services:
   slack-events-bot:
     image: hackgvl/slack-events-bot
+    labels:
+      - "autoheal=true"
     container_name: slack-events-bot
     restart: always
     environment:
       - BOT_TOKEN=bot_token_here
       - SIGNING_SECRET=signing_secret_here
+      - CLIENT_ID=client_id_here
+      - CLIENT_SECRET=client_secret_here
       - PORT=3000
       - TZ=US/Eastern
+      - EVENTS_API_URL=https://stage.hackgreenville.com/api/v0/events
     volumes:
       - ./slack-events-bot.db:/usr/src/app/slack-events-bot.db
     ports:
       - 127.0.0.1:3000:3000
+    healthcheck:
+      test: curl -f "http://localhost:3000/healthz" || exit 1
+      interval: 2m30s
+      timeout: 30s
+      retries: 3
+      start_period: 1m
+
+  ##
+  #
+  # This service is only necessary to run if you'd like for the slack-events-bot container
+  # to be automatically restarted if it were to be marked as unhealthy.
+  #
+  # The autoheal service is not run by default. In order to spin it up please use:
+  #   docker-compose --profile autohealing up
+  #
+  ##
+  autoheal:
+    image: willfarrell/autoheal:latest
+    container_name: autoheal
+    profiles: ["autohealing"]
+    tty: true
+    restart: always
+    environment:
+      - AUTOHEAL_INTERVAL=60
+      - AUTOHEAL_START_PERIOD=120
+      - AUTOHEAL_DEFAULT_STOP_TIMEOUT=10
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  ##
+  #
+  # This service is only necessary to run if you'd like for the slack-events-bot container
+  # to be automatically updated with the latest image
+  #
+  # The watchtower service is not run by default. In order to spin it up please use:
+  #   docker-compose --profile autoupdating up
+  #
+  # To run both the autohealing and autoupdating service please use:
+  #   docker-compose --profile autohealing --profile autoupdating up
+  #
+  ##
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    profiles: ["autoupdating"]
+    restart: always
+    environment:
+      # Poll for image updates every 15 minutes
+      - WATCHTOWER_POLL_INTERVAL=900
+      # Cleans up orphaned images upon pulling new ones
+      - WATCHTOWER_CLEANUP=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

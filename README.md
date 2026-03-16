@@ -1,7 +1,10 @@
 # slack-events-bot
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
+
+## Deprecation Notice
+As of March 2026, this code has been [ported into the HackGreenville Laravel application as a module](https://github.com/hackgvl/hackgreenville-com/pull/570) and is no longer used.
 
 A Slack bot that relays information from HackGreenville Labs' _Events API_ to
 Slack channels!
@@ -37,6 +40,16 @@ git@github.com:hackgvl/slack-events-bot.git`
 1. To check the app's error log from within the Docker container, run `docker-compose logs -f`
 1. Proxy a web server to the Docker container's port, as defined in the docker-composer.yml
 
+### Autohealing
+[willfarrell/autoheal](https://github.com/willfarrell/docker-autoheal) ([Docker Hub](https://hub.docker.com/r/willfarrell/autoheal/)) is used
+to provide autohealing capabilities that will automatically restart containers that repeatedly fail healthchecks. This service is not required for
+local development, and as a result it is set to not run by default. If you would like to spin up this container for local testing purposes then please
+specify the `autohealing` profile whenever executing `docker-compose up`:
+
+```bash
+docker-compose --profile autohealing up
+```
+
 ### Apache Example
 The following needs to be included in an appropriate Apache .conf file, usually as part of an existing VirtualHost directive.
 
@@ -69,8 +82,9 @@ The following needs to be included in an appropriate Apache .conf file, usually 
 1. Create a virtual environment with `python -m venv env`.
 1. Activate the venv with `source env/bin/activate`
     1. Use `deactivate` to exit the venv if needed.
-1. Install dependencies using `pip install -r requirements.txt`
-1. Run the app with `python src/bot.py`!
+1. Install project dependencies using `pip install .` or `pip install .[test]`
+   to install development dependencies for testing
+1. Run the app with `python src/server.py`!
 
 1. Proxy a web server to the running app's port, as defined in the .envrc `PORT` value.
 
@@ -126,10 +140,22 @@ good idea!
   the source code in the `src/` folder.
 - [pylint](https://pylint.readthedocs.io/en/stable/) via `pylint src/` to lint
   the source code in the `src/` folder. We want this to stay at 10/10!
-- `pipreqs --force` to save a new version of `requirements.txt`. This is only
-  necessary if you're adding or removing a new dependency. If you're updating
-  the requirements, make sure to add it to the list of dependencies in
-  `pyproject.toml` as well!
+- [isort](https://pycqa.github.io/isort/index.html) via `isort src/` to make
+  sure that imports are in a standard order (black doesn't do this).
+- [ssort](https://github.com/bwhmather/ssort) via `ssort src/` to better group
+  code.
+- `pip freeze` to figure out which versions of dependencies to use in
+  `pyproject.toml`. This is only necessary if you're adding or removing a new
+  dependency to the project.
+
+## Handy commands
+
+- `pip install .[test]`: Install test dependencies
+- `python -m black src/`: Format source files
+- `python -m isort --check src/`: sort imports with isort
+- `python -m ssort --check src/`: sorts python code
+- `python -m pylint src/`: Runs linter, try to get a 10/10 score!
+- `python -m pytest tests/`: Runs tests
 
 ## License
 
@@ -147,6 +173,10 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://olivia.sculley.dev"><img src="https://avatars.githubusercontent.com/u/88074048?v=4?s=100" width="100px;" alt="Olivia Sculley"/><br /><sub><b>Olivia Sculley</b></sub></a><br /><a href="#ideas-oliviasculley" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/hackgvl/slack-events-bot/commits?author=oliviasculley" title="Code">💻</a> <a href="https://github.com/hackgvl/slack-events-bot/issues?q=author%3Aoliviasculley" title="Bug reports">🐛</a> <a href="#question-oliviasculley" title="Answering Questions">💬</a> <a href="https://github.com/hackgvl/slack-events-bot/commits?author=oliviasculley" title="Documentation">📖</a> <a href="#maintenance-oliviasculley" title="Maintenance">🚧</a> <a href="#infra-oliviasculley" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/allella"><img src="https://avatars.githubusercontent.com/u/1777776?v=4?s=100" width="100px;" alt="Jim Ciallella"/><br /><sub><b>Jim Ciallella</b></sub></a><br /><a href="#infra-allella" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#maintenance-allella" title="Maintenance">🚧</a> <a href="#projectManagement-allella" title="Project Management">📆</a> <a href="https://github.com/hackgvl/slack-events-bot/commits?author=allella" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://olivia.sculley.dev"><img src="https://avatars.githubusercontent.com/u/88074048?v=4?s=100" width="100px;" alt="Olivia Sculley"/><br /><sub><b>Olivia Sculley</b></sub></a><br /><a href="#ideas-oliviasculley" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/hackgvl/slack-events-bot/commits?author=oliviasculley" title="Code">💻</a> <a href="https://github.com/hackgvl/slack-events-bot/issues?q=author%3Aoliviasculley" title="Bug reports">🐛</a> <a href="#question-oliviasculley" title="Answering Questions">💬</a> <a href="https://github.com/hackgvl/slack-events-bot/commits?author=oliviasculley" title="Documentation">📖</a> <a href="#maintenance-oliviasculley" title="Maintenance">🚧</a> <a href="#infra-oliviasculley" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/hackgvl/slack-events-bot/pulls?q=is%3Apr+reviewed-by%3Aoliviasculley" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/hackgvl/slack-events-bot/commits?author=oliviasculley" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/allella"><img src="https://avatars.githubusercontent.com/u/1777776?v=4?s=100" width="100px;" alt="Jim Ciallella"/><br /><sub><b>Jim Ciallella</b></sub></a><br /><a href="#infra-allella" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#maintenance-allella" title="Maintenance">🚧</a> <a href="#projectManagement-allella" title="Project Management">📆</a> <a href="https://github.com/hackgvl/slack-events-bot/commits?author=allella" title="Documentation">📖</a> <a href="https://github.com/hackgvl/slack-events-bot/issues?q=author%3Aallella" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ThorntonMatthewD"><img src="https://avatars.githubusercontent.com/u/44626690?v=4?s=100" width="100px;" alt="Matthew Thornton"/><br /><sub><b>Matthew Thornton</b></sub></a><br /><a href="https://github.com/hackgvl/slack-events-bot/commits?author=ThorntonMatthewD" title="Code">💻</a> <a href="#infra-ThorntonMatthewD" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/hackgvl/slack-events-bot/commits?author=ThorntonMatthewD" title="Tests">⚠️</a> <a href="https://github.com/hackgvl/slack-events-bot/pulls?q=is%3Apr+reviewed-by%3AThorntonMatthewD" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/JakeBobAnderson"><img src="https://avatars.githubusercontent.com/u/89029029?v=4?s=100" width="100px;" alt="Jake Anderson"/><br /><sub><b>Jake Anderson</b></sub></a><br /><a href="https://github.com/hackgvl/slack-events-bot/commits?author=JakeBobAnderson" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/edenxcodes"><img src="https://avatars.githubusercontent.com/u/97955302?v=4?s=100" width="100px;" alt="Eden Oluigbo"/><br /><sub><b>Eden Oluigbo</b></sub></a><br /><a href="https://github.com/hackgvl/slack-events-bot/commits?author=edenxcodes" title="Code">💻</a></td>
     </tr>
   </tbody>

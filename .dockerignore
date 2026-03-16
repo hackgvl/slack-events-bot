@@ -6,4 +6,3 @@
 app_manifest.yml
 Dockerfile
 docker-compose.yml
-pyproject.toml

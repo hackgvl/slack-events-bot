@@ -19,7 +19,9 @@
         "question",
         "doc",
         "maintenance",
-        "infra"
+        "infra",
+        "review",
+        "test"
       ]
     },
     {
@@ -31,7 +33,29 @@
         "infra",
         "maintenance",
         "projectManagement",
-        "doc"
+        "doc",
+        "bug"
+      ]
+    },
+    {
+      "login": "ThorntonMatthewD",
+      "name": "Matthew Thornton",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44626690?v=4",
+      "profile": "https://github.com/ThorntonMatthewD",
+      "contributions": [
+        "code",
+        "infra",
+        "test",
+        "review"
+      ]
+    },
+    {
+      "login": "JakeBobAnderson",
+      "name": "Jake Anderson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/89029029?v=4",
+      "profile": "https://github.com/JakeBobAnderson",
+      "contributions": [
+        "code"
       ]
     },
     {
